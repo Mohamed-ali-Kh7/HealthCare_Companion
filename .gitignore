@@ -1,0 +1,25 @@
+# Secrets
+.env
+*.env
+!.env.example
+
+# Backend (Maven / IDE)
+backend/target/
+*.iml
+.idea/
+.vscode/
+*.log
+
+# Frontend (Flutter)
+frontend/.dart_tool/
+frontend/build/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/android/local.properties
+frontend/android/.gradle/
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+
+# OS
+.DS_Store
+Thumbs.db
