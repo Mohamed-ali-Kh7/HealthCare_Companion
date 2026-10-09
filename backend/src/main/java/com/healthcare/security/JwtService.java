@@ -20,7 +20,23 @@ public class JwtService {
     public JwtService(JwtProperties props) {
         this.props = props;
         // Lève WeakKeyException au démarrage si la clé fait moins de 256 bits
-        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(props.secret()));
+        this.key = Keys.hmacShaKeyFor(decodeSecret(props.secret()));
+    }
+
+        /** Accepte Base64 standard ou Base64URL ; sinon message explicite au démarrage. */
+    private static byte[] decodeSecret(String secret) {
+        String value = secret.trim();
+        try {
+            return Decoders.BASE64.decode(value);
+        } catch (RuntimeException standard) {
+            try {
+                return Decoders.BASE64URL.decode(value);
+            } catch (RuntimeException url) {
+                throw new IllegalStateException(
+                        "JWT_SECRET doit être une clé encodée en Base64 (32 octets minimum). "
+                                + "Générez-en une avec : openssl rand -base64 32", url);
+            }
+        }
     }
 
     public String generateToken(SecurityUser user) {
