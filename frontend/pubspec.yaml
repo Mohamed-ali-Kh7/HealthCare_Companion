@@ -1,0 +1,49 @@
+name: healthcare_companion
+description: Application mobile HealthCare Companion (patients, médecins, pharmaciens, administrateurs).
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.6.0 <4.0.0" # Flutter 3.27+
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Réseau & état
+  http: ^1.2.2
+  provider: ^6.1.2
+
+  # Stockage : token JWT chiffré (Keystore Android / Keychain iOS) ; préférences non sensibles
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.2
+
+  # Dates en français (version imposée par flutter_localizations)
+  intl: any
+
+  # Géolocalisation & carte (OpenStreetMap : aucune clé API nécessaire)
+  geolocator: ^13.0.1
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+  # Télésuivi : capteurs du téléphone + permissions
+  pedometer: ^4.0.2
+  sensors_plus: ^6.0.1
+  permission_handler: ^11.3.1
+
+  # Graphiques du tableau de bord
+  fl_chart: ^0.69.0
+
+  # Rappels de prise de médicaments (notifications locales planifiées)
+  flutter_local_notifications: ^17.2.4
+  timezone: ^0.9.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

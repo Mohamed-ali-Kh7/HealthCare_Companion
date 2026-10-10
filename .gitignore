@@ -5,6 +5,7 @@
 
 # Backend (Maven / IDE)
 backend/target/
+backend/bin/
 *.iml
 .idea/
 .vscode/
