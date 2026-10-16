@@ -24,8 +24,12 @@ class _AsyncViewState<T> extends State<AsyncView<T>> {
   }
 
   Future<void> _reload() async {
+    if (!mounted) return;
     final future = widget.load();
-    setState(() => _future = future);
+    // Bloc obligatoire : une flèche renverrait le Future et setState lèverait une erreur
+    setState(() {
+      _future = future;
+    });
     try {
       await future;
     } catch (_) {

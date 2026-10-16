@@ -35,7 +35,9 @@ class _PatientRecordScreenState extends State<PatientRecordScreen> {
     _future = context.read<PatientService>().getById(widget.patientId);
   }
 
-  void _retry() => setState(() => _future = context.read<PatientService>().getById(widget.patientId));
+  void _retry() => setState(() {
+        _future = context.read<PatientService>().getById(widget.patientId);
+      });
 
   @override
   Widget build(BuildContext context) {
