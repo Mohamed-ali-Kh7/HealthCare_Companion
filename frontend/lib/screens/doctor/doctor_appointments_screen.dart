@@ -27,14 +27,10 @@ class _DoctorAppointmentsScreenState extends State<DoctorAppointmentsScreen> {
   AppointmentStatus? _status = AppointmentStatus.pending;
   Key _viewKey = UniqueKey();
 
-  Future<List<Appointment>> _load() {
-    final today = DateTime.now();
-    // "À venir" pour les demandes et RDV acceptés ; tout l'historique sinon
-    final from = (_status == AppointmentStatus.pending || _status == AppointmentStatus.accepted)
-        ? DateTime(today.year, today.month, today.day)
-        : null;
-    return context.read<AppointmentService>().getDoctorAppointments(status: _status, from: from);
-  }
+  // Pas de filtre de date : une demande ou un RDV accepté resté ouvert après sa date
+  // doit rester visible pour être refusé ou clôturé.
+  Future<List<Appointment>> _load() =>
+      context.read<AppointmentService>().getDoctorAppointments(status: _status);
 
   Future<void> _act(Future<Object?> Function() action, String success, Future<void> Function() reload) async {
     final ok = await runWithFeedback(context, action, successMessage: success);
