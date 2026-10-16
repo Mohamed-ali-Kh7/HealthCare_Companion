@@ -50,20 +50,24 @@ class DailySensorChart extends StatelessWidget {
                 sideTitles: SideTitles(
                   showTitles: true,
                   reservedSize: 44,
-                  getTitlesWidget: (value, meta) =>
-                      Text(value.toInt().toString(), style: labelStyle),
+                  // Le maximum (non arrondi) chevaucherait la dernière graduation
+                  getTitlesWidget: (value, meta) => value == meta.max
+                      ? const SizedBox.shrink()
+                      : Text(value.toInt().toString(), style: labelStyle),
                 ),
               ),
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
-                  reservedSize: 28,
+                  reservedSize: 40,
                   getTitlesWidget: (value, meta) {
                     final i = value.toInt();
                     if (i < 0 || i >= data.length) return const SizedBox.shrink();
+                    // Jour et numéro sur deux lignes : 7 libellés ne tiennent pas sur une ligne
                     return Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(Fmt.dayShort(data[i].date), style: labelStyle),
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(Fmt.dayShort(data[i].date).replaceFirst(' ', '\n'),
+                          textAlign: TextAlign.center, style: labelStyle),
                     );
                   },
                 ),
