@@ -1,0 +1,69 @@
+### A2. Authentification et inscription
+
+| # | Scénario | Étapes | Résultat attendu | Statut |
+|---|---|---|---|---|
+| A2.1 | Connexion valide | Se connecter avec chaque compte de démo | Ouverture de l'espace du rôle (onglets propres au rôle) |  patient, médecin, pharmacien, admin |
+| A2.2 | Mauvais mot de passe | `patient@demo.tn` / `Faux12345` | Message « identifiants invalides », pas de détail sur l'existence du compte | ☐ |
+| A2.3 | Inscription patient | « Créer un compte » → Patient → formulaire complet | Compte créé et connecté directement  | ☐ |
+| A2.4 | Inscription médecin | Rôle Médecin, choisir une spécialité | Message « compte en attente de validation » ; la connexion renvoie « compte désactivé » | ☐ |
+| A2.5 | Validation du formulaire | Mot de passe `abc` ; email déjà utilisé | Erreur champ par champ ; `EMAIL_ALREADY_USED` affiché proprement | ☐ |
+| A2.6 | Persistance de session | Se connecter, tuer l'app, la relancer | Retour direct dans l'espace, sans reconnexion | ☐ |
+| A2.7 | Déconnexion | Icône profil → Déconnexion | Retour à l'écran de connexion ; relancer l'app ne reconnecte pas | ☐ |
+| A2.8 | Changement de mot de passe | Profil → Mot de passe | Succès ; l'ancien mot de passe ne fonctionne plus | ☐ |
+
+### A3. Parcours patient
+
+| # | Scénario | Étapes | Résultat attendu | Statut |
+|---|---|---|---|---|
+| A3.1 | Recherche médecin | Onglet Médecins, taper « Kar », filtrer par spécialité | Liste filtrée ; Dr Trabelsi visible sous « Médecine générale » | ◐ liste et filtres affichés ;
+| A3.2 | Créneaux libres | Ouvrir le médecin, choisir un jour ouvré futur | Créneaux 9h–12h et 14h–17h découpés selon la durée de consultation, sans les créneaux pris | ☐ |
+| A3.3 | Réservation | Choisir un créneau, motif, valider | RDV « En attente » dans l'onglet Rendez-vous | ☐ |
+| A3.4 | Double réservation | Réserver le même créneau depuis un 2ᵉ patient | Refus `SLOT_UNAVAILABLE` | ☐ |
+| A3.5 | Annulation | Annuler un RDV futur | Statut « Annulé » ; le bouton n'existe pas sur un RDV passé | ☐ |
+| A3.6 | Carnet | Onglet Traitements → Ajouter un médicament manuellement | Ligne ajoutée avec heures de rappel ; notification reçue à l'heure prévue | ☐ |
+| A3.7 | Ordonnances | Traitements → Ordonnances → ouvrir une ordonnance | Détail : médicaments, posologie, durée, notes du médecin | ◐ ordonnance visible dans la liste ; détail non ouvert |
+| A3.8 | Pharmacies proches | Onglet Pharmacies, rayons 2 / 5 / 10 / 20 km | 5 km : Pharmacie Centrale (~650 m) ; 10 km : + Pharmacie du Lac ; carte avec tuiles OSM | ◐ liste et distance OK à 5 km ; tuiles grises (voir Points connus) ; 
+| A3.9 | Disponibilité médicament | « Trouver un médicament » → Cétirizine | Pharmacies qui l'ont en stock, avec prix en TND (3 décimales) et distance | ☐ |
+| A3.10 | Santé | Onglet Santé | Graphiques pas et fréquence cardiaque sur 7 jours, axes lisibles 
+| A3.11 | Saisie pouls | « Saisir mon pouls » → 72 puis 400 | 72 accepté et visible ; 400 refusé (hors bornes) | ☐ |
+| A3.12 | Collecte auto | Activer la collecte, Synchroniser | Envoi sans doublon ; un second envoi identique ne crée rien | ☐ |
+| A3.13 | Profil | Modifier téléphone, groupe sanguin, allergies | Valeurs enregistrées et visibles par le médecin traitant | ☐ |
+
+### A4. Parcours médecin
+
+| # | Scénario | Étapes | Résultat attendu | Statut |
+|---|---|---|---|---|
+| A4.1 | Demandes | Planning → En attente | Toutes les demandes ouvertes, **y compris celles dont la date est passée** | |
+| A4.2 | Accepter / refuser | Accepter une demande ; en refuser une autre avec un motif | Statuts mis à jour, message de confirmation, aucune exception dans les logs | ◐ acceptation OK  ;|
+| A4.3 | Terminer | Accepté → Terminer avec compte rendu | Passe en « Terminé » | ✅ |
+| A4.4 | Transition invalide | Via Swagger : `PUT /api/appointments/{id}/accept` sur un RDV terminé | 422 `INVALID_STATUS_TRANSITION` | ☐ |
+| A4.5 | Mes patients | Onglet Patients | Seuls les patients ayant un RDV avec ce médecin | ✅ |
+| A4.6 | Dossier | Ouvrir le patient | Coordonnées, groupe sanguin, allergies | ✅ |
+| A4.7 | Prescription | Prescrire → Cétirizine, 2 prises/jour, 7 jours → Émettre | Bandeau allergie visible ; « Ordonnance enregistrée » | ✅ |
+| A4.8 | Effet côté patient | Se connecter en patient → Traitements | Cétirizine « En cours », 2 fois/jour, rappels 08:00 et 20:00, du jour J à J+6 | ✅ (déclenchement réel de la notification ) |
+| A4.9 | Télésuivi | Dossier → Télésuivi | Graphiques du patient (accès seulement avec RDV accepté ou terminé) | ✅ affichage ; la restriction d'accès est couverte par A7.3 |
+| A4.10 | Disponibilités | Ajouter un créneau samedi 9h–12h, en supprimer un | Les créneaux libres côté patient reflètent le changement | ◐ planning hebdomadaire affiché ; ajout/suppression  |
+| A4.11 | Profil médecin | Changer la durée de consultation (15 → 30 min) | Les créneaux côté patient sont redécoupés | ☐ |
+
+### A5. Parcours pharmacien
+
+| # | Scénario | Étapes | Résultat attendu | Statut |
+|---|---|---|---|---|
+| A5.1 | Stock | Onglet Stock, filtrer « amox » | Liste filtrée, quantités, prix, date de mise à jour | ◐ liste, prix TND à 3 décimales et dates OK ; filtre  |
+| A5.2 | Modifier une ligne | Cétirizine → +2 → Enregistrer | Quantité +2, date « Màj » actualisée | |
+| A5.3 | Référencer | Référencer un médicament absent du stock | Nouvelle ligne ; visible dans « Trouver un médicament » côté patient | ☐ |
+| A5.4 | Rupture | Mettre une quantité à 0 | Badge « Rupture » ; la pharmacie disparaît des résultats de disponibilité | ☐ |
+| A5.5 | Officine | Mon officine → Pharmacie de garde = oui → Enregistrer | Marqueur rouge sur la carte patient | ☐ |
+| A5.6 | Position | « Utiliser ma position actuelle » | Coordonnées mises à jour, carte recentrée | ◐ formulaire et coordonnées affichés ; carte grise, bouton non testé |
+
+### A6. Parcours administrateur
+
+| # | Scénario | Étapes | Résultat attendu | Statut |
+|---|---|---|---|---|
+| A6.1 | Tableau de bord | Onglet Supervision | Compteurs cohérents (total utilisateurs = somme par rôle) | |
+| A6.2 | Validation médecin | Après A2.4 : Comptes → À valider → activer | Le médecin peut se connecter et apparaît dans la recherche patient | ☐ |
+| A6.3 | Désactivation | Désactiver le compte pharmacien | Sa session ouverte est rejetée à la requête suivante (révocation immédiate) | ☐ |
+| A6.4 | Spécialités | Ajouter, puis supprimer une spécialité inutilisée | OK ; doublon refusé (409 `SPECIALITY_ALREADY_EXISTS`) ; suppression d'une spécialité utilisée refusée (409 `SPECIALITY_IN_USE`) | ◐ liste affichée ; ajout/suppression |
+| A6.5 | Médicaments | Ajouter un médicament ; doublon (nom, dosage, forme) ; supprimer un médicament prescrit | Ajout OK ; doublon refusé (409 `MEDICINE_ALREADY_EXISTS`) ; suppression refusée (409 `MEDICINE_IN_USE`) | ☐ |
+| A6.6 | Rendez-vous | Onglet Rendez-vous, filtres par statut | Tous les RDV de la plateforme, filtrés correctement | ☐ |
+

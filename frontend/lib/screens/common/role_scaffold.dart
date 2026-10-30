@@ -44,11 +44,22 @@ class _RoleScaffoldState extends State<RoleScaffold> {
     final ok = await confirm(context,
         title: 'Déconnexion', message: 'Voulez-vous vous déconnecter ?', confirmLabel: 'Se déconnecter');
     if (!ok || !mounted) return;
-    await context.read<SensorCollector>().stop();
-    if (!mounted) return;
-    await context.read<ReminderService>().cancelAll();
-    if (!mounted) return;
-    await context.read<AuthProvider>().logout();
+    // Lus avant tout await : la déconnexion ne dépend plus du cycle de vie de l'écran
+    final sensors = context.read<SensorCollector>();
+    final reminders = context.read<ReminderService>();
+    final auth = context.read<AuthProvider>();
+    // Le nettoyage est au mieux : un échec (capteur, notifications) ne doit jamais bloquer la déconnexion
+    try {
+      await sensors.stop();
+    } catch (e) {
+      debugPrint('Arrêt des capteurs impossible : $e');
+    }
+    try {
+      await reminders.cancelAll();
+    } catch (e) {
+      debugPrint('Annulation des rappels impossible : $e');
+    }
+    await auth.logout();
   }
 
   @override

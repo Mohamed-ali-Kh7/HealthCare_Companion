@@ -72,11 +72,25 @@ class SensorCollector extends ChangeNotifier {
   }
 
   Future<void> stop() async {
-    await _stepSub?.cancel();
-    await _accelSub?.cancel();
     _timer?.cancel();
+    _timer = null;
+    final stepSub = _stepSub;
+    final accelSub = _accelSub;
+    _stepSub = null;
+    _accelSub = null;
     running = false;
     notifyListeners();
+    // Le plugin podomètre peut lever « No active stream to cancel » : l'arrêt reste effectif
+    try {
+      await stepSub?.cancel();
+    } catch (e) {
+      debugPrint('Arrêt du podomètre : $e');
+    }
+    try {
+      await accelSub?.cancel();
+    } catch (e) {
+      debugPrint('Arrêt de l\'accéléromètre : $e');
+    }
   }
 
   Future<void> _onSteps(StepCount event) async {
