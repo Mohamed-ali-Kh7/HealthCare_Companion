@@ -25,8 +25,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             select a from Appointment a
             where a.doctor.id = :doctorId
               and (:status is null or a.status = :status)
-              and (:from is null or a.appointmentDate >= :from)
-              and (:to is null or a.appointmentDate < :to)
+              and (cast(:from as LocalDateTime) is null or a.appointmentDate >= :from)
+              and (cast(:to as LocalDateTime) is null or a.appointmentDate < :to)
             order by a.appointmentDate asc
             """)
     List<Appointment> findForDoctor(@Param("doctorId") Long doctorId,

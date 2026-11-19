@@ -1,0 +1,45 @@
+# Local stack: MySQL + Spring Boot API (profil dev : comptes et données de démo).
+# Secrets and passwords come from backend/.env (copy .env.example), never from this file.
+#
+#   cd backend
+#   docker compose up -d --build     # start
+#   docker compose logs -f backend   # follow API logs
+#   docker compose down              # stop (data kept in the db-data volume)
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: healthcare_companion
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      TZ: UTC
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    ports:
+      - "127.0.0.1:3306:3306"   # host access for DB tools only (not exposed on the LAN)
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  backend:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DB_URL: jdbc:mysql://db:3306/healthcare_companion?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_PROFILES_ACTIVE: dev
+    ports:
+      - "8081:8081"             # reachable from the phone on the LAN
+
+volumes:
+  db-data:

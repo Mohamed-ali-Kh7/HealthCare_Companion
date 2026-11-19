@@ -1,5 +1,6 @@
 package com.healthcare.doctor;
 
+import com.healthcare.common.SearchPatterns;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,18 +21,22 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     Optional<Doctor> findWithDetailsById(Long id);
 
     /** Recherche des médecins actifs, par nom et/ou spécialité. */
+    default Page<Doctor> search(String q, Long specialityId, Pageable pageable) {
+        return searchByPattern(SearchPatterns.containsIgnoreCase(q), specialityId, pageable);
+    }
+
     @EntityGraph(attributePaths = {"speciality"})
     @Query("""
             select d from Doctor d
             where d.user.enabled = true
               and (:specialityId is null or d.speciality.id = :specialityId)
-              and (:q is null
-                   or lower(d.firstName) like lower(concat('%', :q, '%'))
-                   or lower(d.lastName) like lower(concat('%', :q, '%')))
+              and (:pattern is null
+                   or lower(d.firstName) like :pattern
+                   or lower(d.lastName) like :pattern)
             """)
-    Page<Doctor> search(@Param("q") String q,
-                        @Param("specialityId") Long specialityId,
-                        Pageable pageable);
+    Page<Doctor> searchByPattern(@Param("pattern") String pattern,
+                                 @Param("specialityId") Long specialityId,
+                                 Pageable pageable);
 
     /**
      * Verrou pessimiste sur la ligne du médecin pendant une prise de rendez-vous :

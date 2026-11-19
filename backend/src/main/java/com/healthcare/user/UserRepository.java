@@ -1,5 +1,6 @@
 package com.healthcare.user;
 
+import com.healthcare.common.SearchPatterns;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,14 +21,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     long countByEnabledFalse();
 
+    default Page<User> search(String q, Role role, Boolean enabled, Pageable pageable) {
+        return searchByPattern(SearchPatterns.containsIgnoreCase(q), role, enabled, pageable);
+    }
+
     @Query("""
             select u from User u
             where (:role is null or u.role = :role)
               and (:enabled is null or u.enabled = :enabled)
-              and (:q is null or lower(u.email) like lower(concat('%', :q, '%')))
+              and (:pattern is null or lower(u.email) like :pattern)
             """)
-    Page<User> search(@Param("q") String q,
-                      @Param("role") Role role,
-                      @Param("enabled") Boolean enabled,
-                      Pageable pageable);
+    Page<User> searchByPattern(@Param("pattern") String pattern,
+                               @Param("role") Role role,
+                               @Param("enabled") Boolean enabled,
+                               Pageable pageable);
 }
