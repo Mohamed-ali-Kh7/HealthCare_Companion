@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +36,18 @@ public class UserService {
     public User getEntity(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", id));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findEntityByEmail(String email) {
+        return email == null ? Optional.empty() : userRepository.findByEmail(email.trim().toLowerCase());
+    }
+
+    /** Nouveau mot de passe sans l'ancien : uniquement après vérification d'un code reçu par e-mail. */
+    @Transactional
+    public void resetPassword(User user, String newPassword) {
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 
     @Transactional(readOnly = true)

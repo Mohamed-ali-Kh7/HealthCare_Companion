@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "users",
@@ -28,6 +29,14 @@ public class User extends BaseEntity {
     /** false = compte désactivé par l'admin ou en attente de validation (médecin, pharmacien). */
     @Column(nullable = false)
     private boolean enabled = true;
+
+    /**
+     * false = inscrit mais adresse e-mail pas encore confirmée par le code reçu (connexion refusée).
+     * DEFAULT true : les comptes existant avant cette colonne restent utilisables.
+     */
+    @ColumnDefault("true")
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = true;
 
     public User(String email, String passwordHash, Role role, boolean enabled) {
         this.email = email;

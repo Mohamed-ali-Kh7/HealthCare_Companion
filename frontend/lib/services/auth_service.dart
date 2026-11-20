@@ -109,4 +109,24 @@ class AuthService {
     await _api.put('/api/users/me/password',
         body: {'currentPassword': currentPassword, 'newPassword': newPassword});
   }
+
+  /// Code reçu par e-mail après l'inscription. Token renvoyé si le compte est actif.
+  Future<AuthResponse> verifyEmail(String email, String code) async {
+    final json = await _api.post('/api/auth/verify-email', body: {'email': email, 'code': code});
+    return AuthResponse.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<void> resendVerification(String email) async {
+    await _api.post('/api/auth/resend-verification', body: {'email': email});
+  }
+
+  /// Envoie un code de réinitialisation (réponse identique que le compte existe ou non).
+  Future<void> forgotPassword(String email) async {
+    await _api.post('/api/auth/forgot-password', body: {'email': email});
+  }
+
+  Future<void> resetPassword({required String email, required String code, required String newPassword}) async {
+    await _api.post('/api/auth/reset-password',
+        body: {'email': email, 'code': code, 'newPassword': newPassword});
+  }
 }

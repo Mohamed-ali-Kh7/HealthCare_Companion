@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/network/api_exception.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/ui_helpers.dart';
+import 'forgot_password_screen.dart';
 import 'register_screen.dart';
+import 'verify_email_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -42,10 +45,30 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await context.read<AuthProvider>().login(_email.text, _password.text);
       // La navigation est automatique : app.dart affiche l'espace correspondant au rôle
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (e.code == 'EMAIL_NOT_VERIFIED') {
+        // Le serveur vient d'envoyer un nouveau code (sauf envoi très récent)
+        showSnack(context, e.message);
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => VerifyEmailScreen(email: _email.text.trim().toLowerCase())));
+      } else {
+        showSnack(context, e.displayMessage, isError: true);
+      }
     } catch (e) {
       if (mounted) showSnack(context, errorMessage(e), isError: true);
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _forgotPassword() async {
+    final email = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => ForgotPasswordScreen(initialEmail: _email.text.trim())),
+    );
+    if (email != null && mounted) {
+      _email.text = email;
+      _password.clear();
     }
   }
 
@@ -94,7 +117,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       validator: Validators.required,
                       onFieldSubmitted: (_) => _submit(),
                     ),
-                    const SizedBox(height: 24),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _loading ? null : _forgotPassword,
+                        child: const Text('Mot de passe oublié ?'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     FilledButton(
                       onPressed: _loading ? null : _submit,
                       child: _loading

@@ -9,9 +9,11 @@ import '../../providers/auth_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/doctor_service.dart';
 import '../../widgets/ui_helpers.dart';
+import 'verify_email_screen.dart';
 
-/// Inscription. Patient : connecté immédiatement.
-/// Médecin / pharmacien : compte en attente de validation par un administrateur.
+/// Inscription. Si l'envoi d'e-mails est activé côté serveur, l'adresse est d'abord confirmée
+/// par un code à 6 chiffres (VerifyEmailScreen).
+/// Patient : ensuite connecté. Médecin / pharmacien / ambulance : en attente de validation par un administrateur.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -101,10 +103,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     final phone = _phone.text.trim().isEmpty ? null : _phone.text.trim();
+    final email = _email.text.trim().toLowerCase();
     try {
+      final User created;
       switch (_role) {
         case UserRole.patient:
-          await context.read<AuthProvider>().registerPatient(
+          final loggedIn = await context.read<AuthProvider>().registerPatient(
                 email: _email.text,
                 password: _password.text,
                 firstName: _firstName.text,
@@ -112,9 +116,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 phone: phone,
                 dateOfBirth: _dateOfBirth == null ? null : Fmt.apiDate(_dateOfBirth!),
               );
-          return; // session ouverte : app.dart affiche l'espace patient
+          if (loggedIn) return; // session ouverte : app.dart affiche l'espace patient
+          if (mounted) _openVerification(email);
+          return;
         case UserRole.doctor:
-          await context.read<AuthService>().registerDoctor(
+          created = await context.read<AuthService>().registerDoctor(
                 email: _email.text.trim(),
                 password: _password.text,
                 firstName: _firstName.text.trim(),
@@ -124,7 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 address: _address.text.trim(),
               );
         case UserRole.pharmacist:
-          await context.read<AuthService>().registerPharmacist(
+          created = await context.read<AuthService>().registerPharmacist(
                 email: _email.text.trim(),
                 password: _password.text,
                 pharmacyName: _pharmacyName.text.trim(),
@@ -134,7 +140,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 longitude: double.parse(_longitude.text),
               );
         case UserRole.ambulanceCompany:
-          await context.read<AuthService>().registerAmbulanceCompany(
+          created = await context.read<AuthService>().registerAmbulanceCompany(
                 email: _email.text.trim(),
                 password: _password.text,
                 companyName: _pharmacyName.text.trim(),
@@ -149,6 +155,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           return;
       }
       if (!mounted) return;
+      if (!created.emailVerified) {
+        _openVerification(email); // après le code : attente de validation par l'administrateur
+        return;
+      }
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
@@ -169,6 +179,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// Remplace l'inscription par la saisie du code reçu par e-mail.
+  void _openVerification(String email) {
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => VerifyEmailScreen(email: email)));
   }
 
   String? _coordinate(String? v, double limit) {

@@ -29,3 +29,17 @@ services:
         value: "true"
       - key: DEMO_PASSWORD
         value: Demo12345
+      # E-mails (sign-up verification code, forgot password). Unset/false = no e-mail, no verification.
+      # Free plan: outbound SMTP (ports 25/465/587) is blocked by Render → use MAIL_PROVIDER=brevo there.
+      - key: MAIL_ENABLED             # "true" to send e-mails and require e-mail verification
+        sync: false
+      - key: MAIL_PROVIDER            # brevo (HTTPS API, works on the free plan) or smtp (paid plan only)
+        sync: false
+      - key: MAIL_FROM                # sender address (must be a verified sender in Brevo)
+        sync: false
+      - key: BREVO_API_KEY            # provider = brevo
+        sync: false
+      - key: SMTP_USERNAME            # provider = smtp (Gmail address)
+        sync: false
+      - key: SMTP_PASSWORD            # provider = smtp (Gmail app password)
+        sync: false

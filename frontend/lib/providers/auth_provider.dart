@@ -64,7 +64,8 @@ class AuthProvider extends ChangeNotifier {
     await _startSession(response);
   }
 
-  Future<void> registerPatient({
+  /// true : connecté immédiatement. false : saisir d'abord le code reçu par e-mail.
+  Future<bool> registerPatient({
     required String email,
     required String password,
     required String firstName,
@@ -80,7 +81,19 @@ class AuthProvider extends ChangeNotifier {
       phone: phone,
       dateOfBirth: dateOfBirth,
     );
+    if (!response.hasSession) return false;
     await _startSession(response);
+    return true;
+  }
+
+  /// Valide le code reçu par e-mail. Ouvre la session si le compte est actif ;
+  /// sinon (médecin, pharmacien, ambulance) le compte attend la validation d'un administrateur.
+  /// Renvoie true si la session est ouverte.
+  Future<bool> verifyEmail(String email, String code) async {
+    final response = await _authService.verifyEmail(email.trim(), code.trim());
+    if (!response.hasSession) return false;
+    await _startSession(response);
+    return true;
   }
 
   Future<void> logout() async {
@@ -90,7 +103,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> _startSession(AuthResponse response) async {
-    await _tokenStorage.save(response.accessToken);
+    await _tokenStorage.save(response.accessToken!);
     _user = response.user;
     _status = AuthStatus.authenticated;
     notifyListeners();
