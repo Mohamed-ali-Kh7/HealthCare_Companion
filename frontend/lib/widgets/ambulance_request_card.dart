@@ -79,7 +79,15 @@ class AmbulanceRequestCard extends StatelessWidget {
                 ],
               ),
             ],
-            if (r.mission != null) MissionPanel(mission: r.mission!, requestId: r.id),
+            if (r.mission != null)
+              MissionPanel(
+                mission: r.mission!,
+                // Appel intégré : patient ↔ société uniquement (le backend refuse le médecin) ;
+                // le médecin garde les numéros de téléphone de la société et du chauffeur
+                requestId: forDoctor ? null : r.id,
+                // Transport annulé ou clôturé : plus de contact à proposer
+                showContacts: r.status == AmbulanceRequestStatus.approved,
+              ),
             if (actions.isNotEmpty) ...[
               const SizedBox(height: 8),
               Wrap(alignment: WrapAlignment.end, spacing: 8, children: actions),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/utils/formatters.dart';
+import '../../core/utils/location_helper.dart';
 import '../../models/appointment.dart';
 import '../../services/ambulance_service.dart';
 import '../../services/appointment_service.dart';
@@ -26,6 +27,23 @@ class _ScheduledTransportFormScreenState extends State<ScheduledTransportFormScr
   DateTime _date = DateTime.now().add(const Duration(days: 1));
   TimeOfDay _time = const TimeOfDay(hour: 8, minute: 0);
   bool _saving = false;
+
+  /// Point GPS de prise en charge : sert à proposer les sociétés conventionnées qui desservent l'adresse
+  /// et à l'itinéraire du chauffeur. Sans lui, la recherche se fait autour de la position du téléphone.
+  ({double lat, double lng})? _pickup;
+  bool _locating = false;
+
+  Future<void> _useMyPosition() async {
+    setState(() => _locating = true);
+    final p = await LocationHelper.current();
+    if (!mounted) return;
+    setState(() => _locating = false);
+    if (p.isFallback) {
+      showSnack(context, 'Position indisponible : vérifiez la localisation du téléphone', isError: true);
+      return;
+    }
+    setState(() => _pickup = (lat: p.lat, lng: p.lng));
+  }
 
   @override
   void dispose() {
@@ -79,6 +97,8 @@ class _ScheduledTransportFormScreenState extends State<ScheduledTransportFormScr
             address: _address.text.trim(),
             scheduledAt: _scheduledAt,
             reason: reason.isEmpty ? null : reason,
+            lat: _pickup?.lat,
+            lng: _pickup?.lng,
           ),
       successMessage: 'Demande envoyée à votre médecin pour validation',
     );
@@ -122,6 +142,26 @@ class _ScheduledTransportFormScreenState extends State<ScheduledTransportFormScr
                   maxLength: 255,
                   decoration: const InputDecoration(labelText: 'Adresse de prise en charge'),
                   validator: Validators.required,
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(_pickup == null ? Icons.location_off_outlined : Icons.my_location,
+                      color: _pickup == null ? null : Theme.of(context).colorScheme.primary),
+                  title: Text(_pickup == null ? 'Position GPS non renseignée' : 'Prise en charge à ma position actuelle'),
+                  subtitle: Text(_pickup == null
+                      ? 'Si vous êtes à l\'adresse de départ, ajoutez votre position : '
+                          'les ambulances qui la desservent vous seront proposées.'
+                      : '${_pickup!.lat.toStringAsFixed(5)}, ${_pickup!.lng.toStringAsFixed(5)}'),
+                  trailing: _pickup == null
+                      ? TextButton(
+                          onPressed: _locating ? null : _useMyPosition,
+                          child: Text(_locating ? 'Localisation…' : 'Ma position'),
+                        )
+                      : IconButton(
+                          tooltip: 'Retirer la position',
+                          icon: const Icon(Icons.close),
+                          onPressed: () => setState(() => _pickup = null),
+                        ),
                 ),
                 const SizedBox(height: 8),
                 Row(

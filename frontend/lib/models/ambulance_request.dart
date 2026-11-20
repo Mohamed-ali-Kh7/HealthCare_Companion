@@ -109,10 +109,14 @@ class AmbulanceRequest {
 
   bool get hasLocation => latitude != null && longitude != null;
 
-  /// Urgence en cours ou transport validé : peut être clôturé.
+  /// Urgence en cours ou transport validé.
   bool get isOngoing =>
       status == AmbulanceRequestStatus.dispatched ||
       status == AmbulanceRequestStatus.approved;
+
+  /// Clôture par le patient ou le médecin (même règle que le backend) : impossible dès qu'une société
+  /// a affecté un véhicule, c'est elle qui clôture le transport à l'arrivée.
+  bool get canBeClosed => isOngoing && !(mission?.status.inProgress ?? false);
 
   bool get canBeCancelled => !(mission?.status.started ?? false) && _cancellable;
 
@@ -169,6 +173,9 @@ enum MissionStatus {
 
   /// Le véhicule est parti : plus d'annulation possible depuis l'application.
   bool get started => this == enRoute || this == onSite || this == inTransit || this == arrived;
+
+  /// Véhicule affecté et trajet non terminé : la société est engagée sur le transport.
+  bool get inProgress => this == accepted || this == enRoute || this == onSite || this == inTransit;
 
   /// Libellé du bouton qui passe à l'étape suivante (côté société), ou null.
   String? get nextActionLabel => switch (this) {

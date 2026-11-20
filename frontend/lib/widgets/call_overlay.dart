@@ -82,6 +82,13 @@ class _CallOverlayState extends State<CallOverlay> {
       final when = r.scheduledAt == null ? '' : ' du ${Fmt.dateTime(r.scheduledAt!)}';
       final vehicle = m.vehicle == null ? '' : ' · ${m.vehicle!.plate}';
       final note = m.note == null ? '' : '\n« ${m.note} »';
+      // Annulé par le patient, ou clôturé avant que la société ne l'ait pris en charge
+      if (r.status == AmbulanceRequestStatus.cancelled ||
+          (r.status == AmbulanceRequestStatus.closed && m.status != MissionStatus.arrived)) {
+        final what = r.status == AmbulanceRequestStatus.cancelled ? 'annulé par le patient' : 'clôturé';
+        _showInfo(Icons.cancel_outlined, 'Transport$when de ${r.patient.fullName} $what (${m.company.name}).');
+        return;
+      }
       _showInfo(m.status.icon,
           'Transport$when de ${r.patient.fullName}\n${m.status.label} : ${m.company.name}$vehicle$note');
     });

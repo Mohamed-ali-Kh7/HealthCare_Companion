@@ -126,8 +126,8 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             }
           },
         ),
-      // La société clôture elle-même le transport à l'arrivée ; sinon le patient peut le faire
-      if (r.isOngoing && (r.isEmergency || r.mission == null || r.mission!.status == MissionStatus.refused))
+      // Dès qu'une société a affecté un véhicule, c'est elle qui clôture le transport à l'arrivée
+      if (r.canBeClosed)
         FilledButton.tonal(
           onPressed: () => _act(() => service.close(r.id), 'Demande clôturée', reload),
           child: Text(r.isEmergency ? 'Je vais bien' : 'Transport effectué'),

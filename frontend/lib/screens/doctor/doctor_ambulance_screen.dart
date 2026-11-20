@@ -115,10 +115,12 @@ class _DoctorAmbulanceScreenState extends State<DoctorAmbulanceScreen> {
         ];
       case AmbulanceRequestStatus.approved:
         return [
-          FilledButton.tonal(
-            onPressed: () => _act(() => service.close(r.id), 'Transport clôturé', reload),
-            child: const Text('Transport effectué'),
-          ),
+          // Société engagée (véhicule affecté) : c'est elle qui clôture le transport à l'arrivée
+          if (r.canBeClosed)
+            FilledButton.tonal(
+              onPressed: () => _act(() => service.close(r.id), 'Transport clôturé', reload),
+              child: const Text('Transport effectué'),
+            ),
         ];
       default:
         return const [];

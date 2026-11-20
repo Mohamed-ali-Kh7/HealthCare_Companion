@@ -114,14 +114,22 @@ public class AmbulanceRequestService {
     public AmbulanceRequestResponse cancel(Long patientUserId, Long requestId) {
         AmbulanceRequest request = findOwnedByPatient(patientUserId, requestId);
         request.cancel(LocalDateTime.now(clock));
-        return AmbulanceRequestResponse.from(request);
+        return afterEnd(request);
     }
 
     @Transactional
     public AmbulanceRequestResponse closeByPatient(Long patientUserId, Long requestId) {
         AmbulanceRequest request = findOwnedByPatient(patientUserId, requestId);
         request.close();
-        return AmbulanceRequestResponse.from(request);
+        return afterEnd(request);
+    }
+
+    /**
+     * Annulation ou clôture : si une société était concernée (demande en attente de sa réponse ou acceptée),
+     * elle est prévenue en direct, avec le médecin, pour retirer la mission de ses tâches.
+     */
+    private AmbulanceRequestResponse afterEnd(AmbulanceRequest request) {
+        return request.involvesCompany() ? publishMission(request) : AmbulanceRequestResponse.from(request);
     }
 
     // ---------------------------------------------------------------- Médecin
@@ -166,7 +174,7 @@ public class AmbulanceRequestService {
     public AmbulanceRequestResponse closeByDoctor(Long doctorUserId, Long requestId) {
         AmbulanceRequest request = findAssignedToDoctor(doctorUserId, requestId);
         request.close();
-        return AmbulanceRequestResponse.from(request);
+        return afterEnd(request);
     }
 
     // ---------------------------------------------------------------- Ambulance conventionnée

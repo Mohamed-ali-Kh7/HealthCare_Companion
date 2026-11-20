@@ -81,18 +81,20 @@ class _MissionsScreenState extends State<MissionsScreen> {
       load: () => context.read<TransportService>().getMissions(),
       builder: (context, missions, reload) {
         _reload = reload;
-        // À accepter d'abord, puis en cours, planifiées, et enfin terminées / refusées
-        int rank(AmbulanceRequest r) => switch (r.mission?.status) {
-              MissionStatus.requested => 0,
-              MissionStatus.enRoute || MissionStatus.onSite || MissionStatus.inTransit => 1,
-              MissionStatus.accepted => 2,
-              _ => 3,
-            };
+        // À accepter d'abord, puis en cours, planifiées, et enfin terminées / refusées / annulées
+        int rank(AmbulanceRequest r) => !_isActive(r)
+            ? 3
+            : switch (r.mission?.status) {
+                MissionStatus.requested => 0,
+                MissionStatus.enRoute || MissionStatus.onSite || MissionStatus.inTransit => 1,
+                MissionStatus.accepted => 2,
+                _ => 3,
+              };
         final sorted = [...missions]..sort((a, b) {
             final byRank = rank(a).compareTo(rank(b));
             return byRank != 0 ? byRank : (a.scheduledAt ?? a.createdAt).compareTo(b.scheduledAt ?? b.createdAt);
           });
-        final pending = missions.where((m) => m.mission?.status == MissionStatus.requested).length;
+        final pending = missions.where((m) => _isActive(m) && m.mission?.status == MissionStatus.requested).length;
         return RefreshableList(
           onRefresh: reload,
           itemCount: sorted.length,
@@ -122,6 +124,9 @@ class _MissionsScreenState extends State<MissionsScreen> {
   }
 }
 
+/// Transport toujours valable : ni annulé par le patient, ni clôturé (la société peut encore agir).
+bool _isActive(AmbulanceRequest r) => r.status == AmbulanceRequestStatus.approved;
+
 class _MissionCard extends StatelessWidget {
   const _MissionCard({required this.request, required this.onAccept, required this.onRefuse, required this.onAdvance});
 
@@ -136,6 +141,12 @@ class _MissionCard extends StatelessWidget {
     final m = r.mission!;
     final theme = Theme.of(context);
     final p = r.patient;
+    final active = _isActive(r);
+    final endedNote = switch (r.status) {
+      AmbulanceRequestStatus.cancelled => 'Transport annulé par le patient',
+      AmbulanceRequestStatus.closed when m.status != MissionStatus.arrived => 'Transport clôturé par le patient ou son médecin',
+      _ => null,
+    };
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Padding(
@@ -166,6 +177,18 @@ class _MissionCard extends StatelessWidget {
                 style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.w600),
               ),
             MissionPanel(mission: m, showContacts: false),
+            if (endedNote != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(children: [
+                  Icon(Icons.cancel_outlined, size: 18, color: theme.colorScheme.error),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(endedNote,
+                        style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.w600)),
+                  ),
+                ]),
+              ),
             const SizedBox(height: 8),
             Wrap(
               alignment: WrapAlignment.end,
@@ -173,7 +196,7 @@ class _MissionCard extends StatelessWidget {
               runSpacing: 4,
               children: [
                 // Appel dans l'application (fonctionne aussi dans le navigateur), tant que le transport est en cours
-                if (m.status != MissionStatus.refused && m.status != MissionStatus.arrived)
+                if (active && m.status != MissionStatus.refused && m.status != MissionStatus.arrived)
                   FilledButton.tonalIcon(
                     icon: const Icon(Icons.call, size: 18),
                     label: const Text('Appeler le patient'),
@@ -195,17 +218,17 @@ class _MissionCard extends StatelessWidget {
                       }
                     },
                   ),
-                if (r.hasLocation && m.status != MissionStatus.arrived)
+                if (active && r.hasLocation && m.status != MissionStatus.arrived)
                   OutlinedButton.icon(
                     icon: const Icon(Icons.map_outlined, size: 18),
                     label: const Text('Itinéraire'),
                     onPressed: () => Launcher.openMap(r.latitude!, r.longitude!),
                   ),
-                if (m.status == MissionStatus.requested) ...[
+                if (active && m.status == MissionStatus.requested) ...[
                   TextButton(onPressed: onRefuse, child: const Text('Refuser')),
                   FilledButton(onPressed: onAccept, child: const Text('Accepter')),
                 ],
-                if (m.status.nextActionLabel != null)
+                if (active && m.status.nextActionLabel != null)
                   FilledButton.icon(
                     icon: Icon(MissionStatus.values[MissionStatus.values.indexOf(m.status) + 1].icon, size: 18),
                     label: Text(m.status.nextActionLabel!),

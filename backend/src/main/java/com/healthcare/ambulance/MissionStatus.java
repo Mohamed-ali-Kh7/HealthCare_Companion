@@ -39,4 +39,12 @@ public enum MissionStatus {
     public boolean started() {
         return this == EN_ROUTE || this == ON_SITE || this == IN_TRANSIT || this == ARRIVED;
     }
+
+    /**
+     * La société s'est engagée (véhicule affecté) et le trajet n'est pas terminé : c'est elle qui clôture le
+     * transport à l'arrivée, sinon il ne pourrait plus être facturé.
+     */
+    public boolean inProgress() {
+        return this == ACCEPTED || this == EN_ROUTE || this == ON_SITE || this == IN_TRANSIT;
+    }
 }

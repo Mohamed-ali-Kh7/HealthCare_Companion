@@ -72,7 +72,9 @@ class _ChooseAmbulanceScreenState extends State<ChooseAmbulanceScreen> {
             child: ListTile(
               leading: const Icon(Icons.airport_shuttle),
               title: Text('Transport du ${Fmt.dateTime(r.scheduledAt!)}'),
-              subtitle: Text('${r.address ?? ''}\nSociétés conventionnées CNAM qui desservent cette adresse.'),
+              subtitle: Text('${r.address ?? ''}\n${r.hasLocation
+                  ? 'Sociétés conventionnées CNAM qui desservent cette adresse.'
+                  : 'Sociétés conventionnées CNAM proches de votre position actuelle.'}'),
               isThreeLine: true,
             ),
           ),

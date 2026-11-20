@@ -189,8 +189,9 @@ public class AmbulanceRequest extends BaseEntity {
 
     /** Étape suivante du trajet ; à l'arrivée, la demande est clôturée. */
     public MissionStatus advanceMission(Instant now) {
+        requireActiveTransport();
         MissionStatus next = missionStatus == null ? null : missionStatus.next();
-        if (next == null || status != AmbulanceRequestStatus.APPROVED) {
+        if (next == null) {
             throw new BusinessRuleException("INVALID_STATUS_TRANSITION",
                     "Aucune étape suivante pour ce transport (" + missionStatus + ")");
         }
@@ -202,10 +203,27 @@ public class AmbulanceRequest extends BaseEntity {
         return next;
     }
 
+    /** Une société est concernée par le transport : demande en attente de sa réponse, acceptée ou en cours. */
+    public boolean involvesCompany() {
+        return missionStatus != null && missionStatus != MissionStatus.REFUSED;
+    }
+
     private void requireMission(MissionStatus expected) {
-        if (missionStatus != expected || status != AmbulanceRequestStatus.APPROVED) {
+        requireActiveTransport();
+        if (missionStatus != expected) {
             throw new BusinessRuleException("INVALID_STATUS_TRANSITION",
                     "Opération impossible : la mission est " + missionStatus);
+        }
+    }
+
+    /** La société ne peut plus agir sur un transport annulé par le patient ou déjà clôturé. */
+    private void requireActiveTransport() {
+        if (status != AmbulanceRequestStatus.APPROVED) {
+            throw new BusinessRuleException("INVALID_STATUS_TRANSITION", switch (status) {
+                case CANCELLED -> "Ce transport a été annulé par le patient";
+                case CLOSED -> "Ce transport est terminé";
+                default -> "Ce transport n'est plus actif (" + status + ")";
+            });
         }
     }
 
@@ -227,11 +245,19 @@ public class AmbulanceRequest extends BaseEntity {
         status = AmbulanceRequestStatus.CANCELLED;
     }
 
-    /** Fin de la prise en charge : urgence résolue ou transport effectué. */
+    /**
+     * Fin de la prise en charge : urgence résolue ou transport effectué.
+     * Un transport dont la société a affecté un véhicule est clôturé par la société elle-même à l'arrivée :
+     * le clôturer avant bloquerait le suivi du trajet et sa facturation.
+     */
     public void close() {
         if (status != AmbulanceRequestStatus.DISPATCHED && status != AmbulanceRequestStatus.APPROVED) {
             throw new BusinessRuleException("INVALID_STATUS_TRANSITION",
                     "Seule une demande en cours peut être clôturée (" + status + ")");
+        }
+        if (missionStatus != null && missionStatus.inProgress()) {
+            throw new BusinessRuleException("MISSION_IN_PROGRESS",
+                    "Ce transport est pris en charge par une société d'ambulance : elle le clôture à l'arrivée");
         }
         status = AmbulanceRequestStatus.CLOSED;
     }
