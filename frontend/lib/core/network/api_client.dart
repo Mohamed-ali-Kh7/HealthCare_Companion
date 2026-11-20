@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../config/app_config.dart';
 import '../storage/token_storage.dart';
@@ -27,8 +29,9 @@ class ApiClient {
   Future<dynamic> get(String path, {Map<String, dynamic>? query}) =>
       _send('GET', path, query: query);
 
-  Future<dynamic> post(String path, {Object? body, Map<String, dynamic>? query}) =>
-      _send('POST', path, body: body, query: query);
+  /// [timeout] : pour les requêtes longues (ex. assistant santé), sinon AppConfig.requestTimeout.
+  Future<dynamic> post(String path, {Object? body, Map<String, dynamic>? query, Duration? timeout}) =>
+      _send('POST', path, body: body, query: query, timeout: timeout);
 
   Future<dynamic> put(String path, {Object? body}) => _send('PUT', path, body: body);
 
@@ -41,6 +44,7 @@ class ApiClient {
     String path, {
     Object? body,
     Map<String, dynamic>? query,
+    Duration? timeout,
   }) async {
     final uri = _buildUri(path, query);
     final request = http.Request(method, uri)
@@ -55,10 +59,63 @@ class ApiClient {
       request.body = jsonEncode(body);
     }
 
-    final http.Response response;
+    final response = await _execute(request, timeout: timeout);
+    final text = utf8.decode(response.bodyBytes);
+    final dynamic decoded = text.isEmpty ? null : _tryDecode(text);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return decoded;
+    }
+    _throwError(response, decoded, token, path);
+  }
+
+  /// Envoi d'un fichier (multipart/form-data), ex. message vocal. Renvoie le JSON de la réponse.
+  Future<dynamic> postFile(
+    String path, {
+    required String field,
+    required List<int> bytes,
+    required String filename,
+    required String contentType,
+    Map<String, String> fields = const {},
+  }) async {
+    final request = http.MultipartRequest('POST', _buildUri(path, null))
+      ..headers[HttpHeaders.acceptHeader] = 'application/json'
+      ..fields.addAll(fields)
+      ..files.add(http.MultipartFile.fromBytes(field, bytes,
+          filename: filename, contentType: MediaType.parse(contentType)));
+    final token = await tokenStorage.read();
+    if (token != null) {
+      request.headers[HttpHeaders.authorizationHeader] = 'Bearer $token';
+    }
+
+    final response = await _execute(request);
+    final text = utf8.decode(response.bodyBytes);
+    final dynamic decoded = text.isEmpty ? null : _tryDecode(text);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return decoded;
+    }
+    _throwError(response, decoded, token, path);
+  }
+
+  /// Téléchargement binaire authentifié (ex. audio d'un message vocal), avec son type de contenu.
+  Future<({Uint8List bytes, String? contentType})> download(String path) async {
+    final request = http.Request('GET', _buildUri(path, null));
+    final token = await tokenStorage.read();
+    if (token != null) {
+      request.headers[HttpHeaders.authorizationHeader] = 'Bearer $token';
+    }
+    final response = await _execute(request);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return (bytes: response.bodyBytes, contentType: response.headers['content-type']);
+    }
+    final text = utf8.decode(response.bodyBytes, allowMalformed: true);
+    _throwError(response, text.isEmpty ? null : _tryDecode(text), token, path);
+  }
+
+  Future<http.Response> _execute(http.BaseRequest request, {Duration? timeout}) async {
     try {
-      final streamed = await _http.send(request).timeout(AppConfig.requestTimeout);
-      response = await http.Response.fromStream(streamed);
+      final streamed = await _http.send(request).timeout(timeout ?? AppConfig.requestTimeout);
+      return await http.Response.fromStream(streamed);
     } on SocketException {
       throw ApiException.network();
     } on TimeoutException {
@@ -66,14 +123,9 @@ class ApiClient {
     } on http.ClientException {
       throw ApiException.network();
     }
+  }
 
-    final text = utf8.decode(response.bodyBytes);
-    final dynamic decoded = text.isEmpty ? null : _tryDecode(text);
-
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return decoded;
-    }
-
+  Never _throwError(http.Response response, dynamic decoded, String? token, String path) {
     final error = decoded is Map<String, dynamic>
         ? ApiException.fromJson(response.statusCode, decoded)
         : ApiException(

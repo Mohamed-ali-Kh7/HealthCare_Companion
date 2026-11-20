@@ -39,6 +39,14 @@ public class DoctorController {
         return doctorService.getMyProfile(me.id());
     }
 
+    /** Absent / disponible : visible par les patients dans la messagerie (avec renvoi vers l'assistant). */
+    @PutMapping("/me/away")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public DoctorResponse setMyAway(@AuthenticationPrincipal SecurityUser me,
+                                    @Valid @RequestBody com.healthcare.doctor.dto.AwayRequest request) {
+        return doctorService.setMyAway(me.id(), request);
+    }
+
     @PutMapping("/me")
     @PreAuthorize("hasRole('DOCTOR')")
     public DoctorResponse updateMyProfile(@AuthenticationPrincipal SecurityUser me,

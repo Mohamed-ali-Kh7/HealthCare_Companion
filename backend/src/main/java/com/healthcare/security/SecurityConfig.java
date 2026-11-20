@@ -38,7 +38,11 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
-            "/error"
+            "/error",
+            // Vérification d'ordonnance par QR code : protégée par le jeton signé du lien
+            "/verify/prescription/*",
+            // Vérification de facture par QR code : idem
+            "/verify/invoice/*"
     };
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -59,6 +63,9 @@ public class SecurityConfig {
                         // La liste des spécialités est nécessaire au formulaire d'inscription médecin
                         .requestMatchers(HttpMethod.GET, "/api/specialities", "/api/specialities/*").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // Appels : un WebSocket ne peut pas porter d'en-tête Authorization depuis un navigateur ;
+                        // le JWT (?token=) est vérifié par CallHandshakeInterceptor avant toute connexion
+                        .requestMatchers("/ws/calls").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint(authenticationEntryPoint)

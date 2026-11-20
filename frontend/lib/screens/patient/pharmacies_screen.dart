@@ -112,8 +112,7 @@ class _PharmaciesScreenState extends State<PharmaciesScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Text(p.distanceLabel,
-                                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text(p.distanceLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
                                   if (p.onDuty) const Text('De garde', style: TextStyle(color: Colors.red)),
                                 ],
                               ),

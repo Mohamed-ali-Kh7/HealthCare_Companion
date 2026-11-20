@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -45,6 +46,7 @@ public class PatientService {
         patient.setDateOfBirth(request.dateOfBirth());
         patient.setBloodGroup(blankToNull(request.bloodGroup()));
         patient.setAllergies(blankToNull(request.allergies()));
+        patient.setCnamNumber(blankToNull(request.cnamNumber()));
         return PatientResponse.from(patient);
     }
 
@@ -82,6 +84,12 @@ public class PatientService {
     public Patient getEntity(Long id) {
         return patientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", id));
+    }
+
+    /** Plusieurs patients d'un coup (liste vide si aucun id), compte utilisateur chargé. */
+    @Transactional(readOnly = true)
+    public List<Patient> getEntities(Collection<Long> ids) {
+        return ids.isEmpty() ? List.of() : patientRepository.findByIdIn(ids);
     }
 
     @Transactional(readOnly = true)

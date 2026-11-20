@@ -57,8 +57,7 @@ class AppointmentCard extends StatelessWidget {
               ],
               if (a.doctorNote != null) ...[
                 const SizedBox(height: 4),
-                Text('Note du médecin : ${a.doctorNote}',
-                    style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+                Text('Note du médecin : ${a.doctorNote}', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
               ],
               if (actions.isNotEmpty) ...[
                 const SizedBox(height: 8),

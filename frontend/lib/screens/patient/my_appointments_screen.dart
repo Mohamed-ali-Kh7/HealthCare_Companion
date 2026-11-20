@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/notifications/appointment_reminder_service.dart';
 import '../../models/appointment.dart';
 import '../../services/appointment_service.dart';
 import '../../widgets/appointment_card.dart';
@@ -13,11 +16,15 @@ class MyAppointmentsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = context.read<AppointmentService>();
+    final reminders = context.read<AppointmentReminderService>();
     return AsyncView<List<Appointment>>(
-      load: service.getMine,
+      load: () async {
+        final list = await service.getMine();
+        unawaited(reminders.refresh()); // RDV réservé, annulé ou accepté : rappels à jour
+        return list;
+      },
       builder: (context, appointments, reload) {
-        final upcoming = appointments.where((a) => a.isUpcoming).toList()
-          ..sort((a, b) => a.date.compareTo(b.date));
+        final upcoming = appointments.where((a) => a.isUpcoming).toList()..sort((a, b) => a.date.compareTo(b.date));
         final past = appointments.where((a) => !a.isUpcoming).toList();
         final items = <Widget>[
           if (upcoming.isNotEmpty) const _Section('À venir'),

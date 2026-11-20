@@ -5,7 +5,7 @@
 //   dart run tool/configure_android.dart
 //
 // Le script est idempotent (il peut être relancé sans effet de bord). Il ajoute :
-//  - les permissions (réseau, localisation, activité physique, notifications) ;
+//  - les permissions (réseau, localisation, activité physique, notifications, micro et caméra) ;
 //  - l'autorisation du HTTP non chiffré (développement local uniquement) ;
 //  - les récepteurs de flutter_local_notifications (rappels planifiés, redémarrage) ;
 //  - le "core library desugaring" exigé par flutter_local_notifications.
@@ -57,6 +57,10 @@ void _patchManifest(File file) {
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 ''';
   xml = xml.replaceFirst('<application', '$permissions    <application');
 

@@ -41,7 +41,11 @@ class Prescription {
     required this.doctorSpeciality,
     required this.items,
     this.notes,
+    this.verificationUrl,
   });
+
+  /// Lien public signé encodé dans le QR code du PDF (page « ordonnance authentique »).
+  final String? verificationUrl;
 
   final int id;
   final DateTime date;
@@ -57,6 +61,7 @@ class Prescription {
       id: json['id'] as int,
       date: ApiDates.parseLocal(json['prescriptionDate'])!,
       notes: json['notes'] as String?,
+      verificationUrl: json['verificationUrl'] as String?,
       patient: PersonSummary.fromJson(json['patient'] as Map<String, dynamic>),
       doctorName: 'Dr ${doctor['firstName']} ${doctor['lastName']}',
       doctorSpeciality: doctor['specialityName'] as String,

@@ -16,6 +16,7 @@ class PatientService {
     String? dateOfBirth,
     String? bloodGroup,
     String? allergies,
+    String? cnamNumber,
   }) async {
     final json = await _api.put('/api/patients/me', body: {
       'firstName': firstName,
@@ -24,6 +25,7 @@ class PatientService {
       'dateOfBirth': dateOfBirth,
       'bloodGroup': bloodGroup,
       'allergies': allergies,
+      'cnamNumber': cnamNumber,
     });
     return Patient.fromJson(json as Map<String, dynamic>);
   }

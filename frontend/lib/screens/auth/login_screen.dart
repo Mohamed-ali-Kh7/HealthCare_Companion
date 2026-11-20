@@ -66,18 +66,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Icon(Icons.health_and_safety, size: 64, color: theme.colorScheme.primary),
                     const SizedBox(height: 12),
-                    Text('HealthCare Companion',
-                        textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
+                    Text('HealthCare Companion', textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
                     Text('Votre parcours de soins, au même endroit',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+                        textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
                     const SizedBox(height: 32),
                     TextFormField(
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
                       autofillHints: const [AutofillHints.email],
-                      decoration: const InputDecoration(
-                          labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
+                      decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
                       validator: Validators.email,
                     ),
                     const SizedBox(height: 16),
@@ -101,14 +98,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     FilledButton(
                       onPressed: _loading ? null : _submit,
                       child: _loading
-                          ? const SizedBox(
-                              width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
+                          ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Text('Se connecter'),
                     ),
                     const SizedBox(height: 12),
                     TextButton(
-                      onPressed: () => Navigator.of(context)
-                          .push(MaterialPageRoute(builder: (_) => const RegisterScreen())),
+                      onPressed: () =>
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RegisterScreen())),
                       child: const Text('Créer un compte'),
                     ),
                   ],

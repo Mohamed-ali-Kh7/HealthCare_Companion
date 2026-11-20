@@ -41,6 +41,10 @@ public class Patient extends BaseEntity {
     @Column(length = 500)
     private String allergies;
 
+    /** Identifiant d'assuré social CNAM (facturation, bulletin de soins). */
+    @Column(name = "cnam_number", length = 20)
+    private String cnamNumber;
+
     public Patient(User user, String firstName, String lastName, String phone, LocalDate dateOfBirth) {
         this.user = user;
         this.firstName = firstName;

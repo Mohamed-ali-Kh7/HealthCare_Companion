@@ -10,6 +10,7 @@ class Patient {
     this.dateOfBirth,
     this.bloodGroup,
     this.allergies,
+    this.cnamNumber,
   });
 
   final int id;
@@ -20,6 +21,9 @@ class Patient {
   final DateTime? dateOfBirth;
   final String? bloodGroup;
   final String? allergies;
+
+  /// Identifiant d'assuré social CNAM (facturation, bulletin de soins).
+  final String? cnamNumber;
 
   String get fullName => '$firstName $lastName';
 
@@ -41,6 +45,7 @@ class Patient {
         dateOfBirth: ApiDates.parseLocal(json['dateOfBirth']),
         bloodGroup: json['bloodGroup'] as String?,
         allergies: json['allergies'] as String?,
+        cnamNumber: json['cnamNumber'] as String?,
       );
 }
 

@@ -104,8 +104,8 @@ class _AdminAppointmentsScreenState extends State<AdminAppointmentsScreen> {
                       children: [
                         Padding(
                           padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                          child: Text('Patient : ${a.patient.fullName}',
-                              style: Theme.of(context).textTheme.labelMedium),
+                          child:
+                              Text('Patient : ${a.patient.fullName}', style: Theme.of(context).textTheme.labelMedium),
                         ),
                         AppointmentCard(appointment: a),
                       ],

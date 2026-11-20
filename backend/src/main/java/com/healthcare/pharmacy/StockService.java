@@ -68,6 +68,34 @@ public class StockService {
         return stockRepository.saveAndFlush(stock); // flush : updatedAt renseigné dans la réponse
     }
 
+    // ---------------------------------------------------------------- Commandes (module order)
+
+    /** Ligne de stock d'un médicament dans une pharmacie ; vide si la pharmacie ne le référence pas. */
+    @Transactional(readOnly = true)
+    public java.util.Optional<Stock> findStock(Long pharmacyId, Long medicineId) {
+        return stockRepository.findByPharmacyIdAndMedicineId(pharmacyId, medicineId);
+    }
+
+    /** Décompte le stock quand la pharmacie confirme une commande. */
+    @Transactional
+    public void withdraw(Long pharmacyId, Long medicineId, int quantity) {
+        Stock stock = stockRepository.findByPharmacyIdAndMedicineId(pharmacyId, medicineId)
+                .orElseThrow(() -> new com.healthcare.common.exception.BusinessRuleException("OUT_OF_STOCK",
+                        "Ce médicament n'est plus référencé dans votre stock"));
+        if (stock.getQuantity() < quantity) {
+            throw new com.healthcare.common.exception.BusinessRuleException("INSUFFICIENT_STOCK",
+                    "Stock insuffisant : " + stock.getQuantity() + " disponible(s)");
+        }
+        stock.setQuantity(stock.getQuantity() - quantity);
+    }
+
+    /** Remet en stock les unités d'une commande confirmée puis annulée. */
+    @Transactional
+    public void restock(Long pharmacyId, Long medicineId, int quantity) {
+        stockRepository.findByPharmacyIdAndMedicineId(pharmacyId, medicineId)
+                .ifPresent(stock -> stock.setQuantity(stock.getQuantity() + quantity));
+    }
+
     // ---------------------------------------------------------------- Patients / médecins
 
     @Transactional(readOnly = true)

@@ -4,6 +4,7 @@ import com.healthcare.common.dto.PageResponse;
 import com.healthcare.common.exception.BusinessRuleException;
 import com.healthcare.common.exception.ResourceNotFoundException;
 import com.healthcare.doctor.dto.AvailabilityRequest;
+import com.healthcare.doctor.dto.AwayRequest;
 import com.healthcare.doctor.dto.AvailabilityResponse;
 import com.healthcare.doctor.dto.DoctorResponse;
 import com.healthcare.doctor.dto.UpdateDoctorRequest;
@@ -17,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -32,6 +35,8 @@ public class DoctorService {
     private final DoctorRepository doctorRepository;
     private final DoctorAvailabilityRepository availabilityRepository;
     private final SpecialityService specialityService;
+    private final org.springframework.context.ApplicationEventPublisher events;
+    private final java.time.Clock clock;
 
     // ---------------------------------------------------------------- Profil
 
@@ -60,6 +65,22 @@ public class DoctorService {
         return DoctorResponse.from(getEntityByUserId(userId));
     }
 
+    /** Absent / disponible. Une date de retour passée est refusée. */
+    @Transactional
+    public DoctorResponse setMyAway(Long userId, AwayRequest request) {
+        Doctor doctor = getEntityByUserId(userId);
+        LocalDate today = LocalDate.now(clock);
+        if (request.away() && request.until() != null && request.until().isBefore(today)) {
+            throw new BusinessRuleException("AWAY_UNTIL_IN_PAST", "La date de retour doit être aujourd'hui ou plus tard");
+        }
+        String message = request.message() == null || request.message().isBlank() ? null : request.message().trim();
+        doctor.setAway(request.away(), message, request.until());
+        events.publishEvent(new DoctorAwayChangedEvent(doctor.getId(),
+                "Dr " + doctor.getFirstName() + " " + doctor.getLastName(),
+                request.away(), doctor.getAwayMessage(), doctor.getAwayUntil()));
+        return DoctorResponse.from(doctor);
+    }
+
     @Transactional
     public DoctorResponse updateMyProfile(Long userId, UpdateDoctorRequest request) {
         Doctor doctor = getEntityByUserId(userId);
@@ -81,6 +102,12 @@ public class DoctorService {
     public Doctor getEntity(Long id) {
         return doctorRepository.findWithDetailsById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Médecin", id));
+    }
+
+    /** Plusieurs médecins d'un coup (liste vide si aucun id), spécialité et compte chargés. */
+    @Transactional(readOnly = true)
+    public List<Doctor> getEntities(Collection<Long> ids) {
+        return ids.isEmpty() ? List.of() : doctorRepository.findByIdIn(ids);
     }
 
     @Transactional(readOnly = true)

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/notifications/appointment_reminder_service.dart';
 import '../../models/appointment.dart';
 import '../../services/appointment_service.dart';
 import '../../widgets/appointment_card.dart';
@@ -29,8 +32,12 @@ class _DoctorAppointmentsScreenState extends State<DoctorAppointmentsScreen> {
 
   // Pas de filtre de date : une demande ou un RDV accepté resté ouvert après sa date
   // doit rester visible pour être refusé ou clôturé.
-  Future<List<Appointment>> _load() =>
-      context.read<AppointmentService>().getDoctorAppointments(status: _status);
+  Future<List<Appointment>> _load() async {
+    final list = await context.read<AppointmentService>().getDoctorAppointments(status: _status);
+    // RDV accepté, terminé ou annulé : rappels à jour
+    if (mounted) unawaited(context.read<AppointmentReminderService>().refresh());
+    return list;
+  }
 
   Future<void> _act(Future<Object?> Function() action, String success, Future<void> Function() reload) async {
     final ok = await runWithFeedback(context, action, successMessage: success);
@@ -44,8 +51,8 @@ class _DoctorAppointmentsScreenState extends State<DoctorAppointmentsScreen> {
         return [
           TextButton(
             onPressed: () async {
-              final note = await promptText(context,
-                  title: 'Motif du refus', hint: 'Optionnel', confirmLabel: 'Refuser');
+              final note =
+                  await promptText(context, title: 'Motif du refus', hint: 'Optionnel', confirmLabel: 'Refuser');
               if (note == null || !mounted) return;
               await _act(() => service.reject(a.id, note: note.isEmpty ? null : note), 'Rendez-vous refusé', reload);
             },
@@ -60,11 +67,11 @@ class _DoctorAppointmentsScreenState extends State<DoctorAppointmentsScreen> {
         return [
           FilledButton.tonal(
             onPressed: () async {
-              final note = await promptText(context,
-                  title: 'Compte rendu', hint: 'Optionnel', confirmLabel: 'Terminer');
+              final note =
+                  await promptText(context, title: 'Compte rendu', hint: 'Optionnel', confirmLabel: 'Terminer');
               if (note == null || !mounted) return;
-              await _act(() => service.complete(a.id, note: note.isEmpty ? null : note),
-                  'Consultation terminée', reload);
+              await _act(
+                  () => service.complete(a.id, note: note.isEmpty ? null : note), 'Consultation terminée', reload);
             },
             child: const Text('Terminer'),
           ),

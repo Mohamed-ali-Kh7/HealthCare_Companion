@@ -14,7 +14,9 @@ public record PrescriptionResponse(
         String notes,
         PersonSummary patient,
         DoctorInfo doctor,
-        List<Item> items
+        List<Item> items,
+        /** Lien public signé (QR code du PDF) : page « ordonnance authentique ». */
+        String verificationUrl
 ) {
     public record DoctorInfo(Long id, String firstName, String lastName, String specialityName) {
     }
@@ -28,7 +30,7 @@ public record PrescriptionResponse(
         }
     }
 
-    public static PrescriptionResponse from(Prescription p) {
+    public static PrescriptionResponse from(Prescription p, String verificationUrl) {
         return new PrescriptionResponse(
                 p.getId(),
                 p.getPrescriptionDate(),
@@ -36,6 +38,7 @@ public record PrescriptionResponse(
                 new PersonSummary(p.getPatient().getId(), p.getPatient().getFirstName(), p.getPatient().getLastName()),
                 new DoctorInfo(p.getDoctor().getId(), p.getDoctor().getFirstName(), p.getDoctor().getLastName(),
                         p.getDoctor().getSpeciality().getName()),
-                p.getItems().stream().map(Item::from).toList());
+                p.getItems().stream().map(Item::from).toList(),
+                verificationUrl);
     }
 }

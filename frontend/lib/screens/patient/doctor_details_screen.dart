@@ -130,8 +130,7 @@ class _DoctorDetailsState extends State<_DoctorDetails> {
           title: Text('Consultation de ${d.consultationDurationMinutes} min'),
           subtitle: Text(dayNames.isEmpty ? 'Planning non renseigné' : 'Consulte : $dayNames'),
         ),
-        if (d.bio != null)
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text(d.bio!)),
+        if (d.bio != null) Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text(d.bio!)),
         const Divider(height: 32),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),

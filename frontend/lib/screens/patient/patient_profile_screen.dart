@@ -39,6 +39,7 @@ class _PatientFormState extends State<_PatientForm> {
   late final _lastName = TextEditingController(text: widget.patient.lastName);
   late final _phone = TextEditingController(text: widget.patient.phone ?? '');
   late final _allergies = TextEditingController(text: widget.patient.allergies ?? '');
+  late final _cnam = TextEditingController(text: widget.patient.cnamNumber ?? '');
   late DateTime? _dateOfBirth = widget.patient.dateOfBirth;
   late String? _bloodGroup = widget.patient.bloodGroup;
   bool _saving = false;
@@ -49,6 +50,7 @@ class _PatientFormState extends State<_PatientForm> {
     _lastName.dispose();
     _phone.dispose();
     _allergies.dispose();
+    _cnam.dispose();
     super.dispose();
   }
 
@@ -64,6 +66,7 @@ class _PatientFormState extends State<_PatientForm> {
             dateOfBirth: _dateOfBirth == null ? null : Fmt.apiDate(_dateOfBirth!),
             bloodGroup: _bloodGroup,
             allergies: _allergies.text.trim(),
+            cnamNumber: _cnam.text.trim(),
           ),
       successMessage: 'Profil mis à jour',
     );
@@ -133,6 +136,20 @@ class _PatientFormState extends State<_PatientForm> {
             maxLength: 500,
             maxLines: 2,
             decoration: const InputDecoration(labelText: 'Allergies connues'),
+          ),
+          gap,
+          TextFormField(
+            controller: _cnam,
+            maxLength: 20,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Numéro CNAM (assuré social)',
+              hintText: 'ex : 12345678 / 00',
+              helperText: 'Pour la prise en charge de vos consultations et le bulletin de soins',
+            ),
+            validator: (v) => v == null || RegExp(r'^[0-9 /-]*$').hasMatch(v.trim())
+                ? null
+                : 'Chiffres uniquement',
           ),
           const SizedBox(height: 8),
           Text(

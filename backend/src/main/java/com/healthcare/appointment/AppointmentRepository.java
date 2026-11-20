@@ -60,5 +60,36 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Long> findPatientIdsOfDoctor(@Param("doctorId") Long doctorId,
                                       @Param("statuses") Collection<AppointmentStatus> statuses);
 
+    @Query("""
+            select distinct a.doctor.id from Appointment a
+            where a.patient.id = :patientId and a.status in :statuses
+            """)
+    List<Long> findDoctorIdsOfPatient(@Param("patientId") Long patientId,
+                                      @Param("statuses") Collection<AppointmentStatus> statuses);
+
     long countByStatus(AppointmentStatus status);
+
+    // ---------------------------------------------------------------- Statistiques
+
+    /** Lignes [statut, nombre] pour un patient. */
+    @Query("select a.status, count(a) from Appointment a where a.patient.id = :patientId group by a.status")
+    List<Object[]> countByStatusForPatient(@Param("patientId") Long patientId);
+
+    /** Lignes [statut, nombre] pour un médecin. */
+    @Query("select a.status, count(a) from Appointment a where a.doctor.id = :doctorId group by a.status")
+    List<Object[]> countByStatusForDoctor(@Param("doctorId") Long doctorId);
+
+    @Query("""
+            select count(distinct a.doctor.id) from Appointment a
+            where a.patient.id = :patientId and a.status in :statuses
+            """)
+    long countDistinctDoctorsOfPatient(@Param("patientId") Long patientId,
+                                       @Param("statuses") Collection<AppointmentStatus> statuses);
+
+    @EntityGraph(attributePaths = {"patient", "doctor", "doctor.speciality"})
+    Optional<Appointment> findFirstByPatientIdAndStatusInAndAppointmentDateAfterOrderByAppointmentDateAsc(
+            Long patientId, Collection<AppointmentStatus> statuses, LocalDateTime after);
+
+    long countByDoctorIdAndStatusAndAppointmentDateGreaterThanEqual(Long doctorId, AppointmentStatus status,
+                                                                    LocalDateTime from);
 }

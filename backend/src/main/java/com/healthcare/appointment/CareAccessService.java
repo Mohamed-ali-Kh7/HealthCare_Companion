@@ -40,13 +40,24 @@ public class CareAccessService {
 
     @Transactional(readOnly = true)
     public void assertCanTreatPatient(Long doctorId, Long patientId) {
-        if (!appointmentRepository.existsByDoctorIdAndPatientIdAndStatusIn(doctorId, patientId, TREAT_STATUSES)) {
+        if (!canTreatPatient(doctorId, patientId)) {
             throw new AccessDeniedException("Un rendez-vous accepté avec ce patient est requis");
         }
     }
 
     @Transactional(readOnly = true)
+    public boolean canTreatPatient(Long doctorId, Long patientId) {
+        return appointmentRepository.existsByDoctorIdAndPatientIdAndStatusIn(doctorId, patientId, TREAT_STATUSES);
+    }
+
+    @Transactional(readOnly = true)
     public List<Long> findPatientIdsOfDoctor(Long doctorId) {
         return appointmentRepository.findPatientIdsOfDoctor(doctorId, VIEW_STATUSES);
+    }
+
+    /** Médecins avec qui le patient a une relation de soin (même règle que la consultation du dossier). */
+    @Transactional(readOnly = true)
+    public List<Long> findDoctorIdsOfPatient(Long patientId) {
+        return appointmentRepository.findDoctorIdsOfPatient(patientId, VIEW_STATUSES);
     }
 }
