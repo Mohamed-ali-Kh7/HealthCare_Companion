@@ -30,7 +30,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _lastName = TextEditingController();
   final _phone = TextEditingController();
   final _address = TextEditingController();
+  /// Nom de la pharmacie ou de la société d'ambulance.
   final _pharmacyName = TextEditingController();
+  final _convention = TextEditingController();
+  final _city = TextEditingController();
   final _latitude = TextEditingController();
   final _longitude = TextEditingController();
   DateTime? _dateOfBirth;
@@ -46,7 +49,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     for (final c in [
-      _email, _password, _firstName, _lastName, _phone, _address, _pharmacyName, _latitude, _longitude
+      _email,
+      _password,
+      _firstName,
+      _lastName,
+      _phone,
+      _address,
+      _pharmacyName,
+      _convention,
+      _city,
+      _latitude,
+      _longitude
     ]) {
       c.dispose();
     }
@@ -120,6 +133,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 latitude: double.parse(_latitude.text),
                 longitude: double.parse(_longitude.text),
               );
+        case UserRole.ambulanceCompany:
+          await context.read<AuthService>().registerAmbulanceCompany(
+                email: _email.text.trim(),
+                password: _password.text,
+                companyName: _pharmacyName.text.trim(),
+                conventionNumber: _convention.text.trim(),
+                address: _address.text.trim(),
+                city: _city.text.trim(),
+                phone: phone ?? '',
+                latitude: double.parse(_latitude.text),
+                longitude: double.parse(_longitude.text),
+              );
         case UserRole.admin:
           return;
       }
@@ -128,8 +153,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Demande envoyée'),
-          content: const Text(
-              'Votre compte a été créé. Il sera actif après validation par un administrateur.'),
+          content: const Text('Votre compte a été créé. Il sera actif après validation par un administrateur.'),
           actions: [
             FilledButton(
               style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),
@@ -167,10 +191,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               SegmentedButton<UserRole>(
                 segments: const [
                   ButtonSegment(value: UserRole.patient, label: Text('Patient'), icon: Icon(Icons.person)),
-                  ButtonSegment(
-                      value: UserRole.doctor, label: Text('Médecin'), icon: Icon(Icons.medical_services)),
-                  ButtonSegment(
-                      value: UserRole.pharmacist, label: Text('Pharmacie'), icon: Icon(Icons.local_pharmacy)),
+                  ButtonSegment(value: UserRole.doctor, label: Text('Médecin'), icon: Icon(Icons.medical_services)),
+                  ButtonSegment(value: UserRole.pharmacist, label: Text('Pharmacie'), icon: Icon(Icons.local_pharmacy)),
+                  ButtonSegment(value: UserRole.ambulanceCompany, label: Text('Ambulance'), icon: Icon(Icons.airport_shuttle)),
                 ],
                 selected: {_role},
                 onSelectionChanged: (s) => setState(() => _role = s.first),
@@ -201,13 +224,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 validator: Validators.password,
               ),
               gap,
-              if (_role == UserRole.pharmacist) ...[
+              if (_role == UserRole.pharmacist || _role == UserRole.ambulanceCompany) ...[
                 TextFormField(
                   controller: _pharmacyName,
-                  decoration: const InputDecoration(labelText: 'Nom de la pharmacie'),
+                  decoration: InputDecoration(
+                      labelText: _role == UserRole.pharmacist ? 'Nom de la pharmacie' : "Nom de la société d'ambulance"),
                   validator: Validators.required,
                 ),
                 gap,
+                if (_role == UserRole.ambulanceCompany) ...[
+                  TextFormField(
+                    controller: _convention,
+                    decoration: const InputDecoration(
+                      labelText: 'Numéro de convention CNAM',
+                      hintText: 'ex : CNAM-AMB-0142',
+                    ),
+                    validator: Validators.required,
+                  ),
+                  gap,
+                ],
               ] else ...[
                 TextFormField(
                   controller: _firstName,
@@ -225,8 +260,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _phone,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Téléphone (optionnel)'),
-                validator: Validators.phone,
+                decoration: InputDecoration(
+                    labelText: _role == UserRole.ambulanceCompany ? 'Téléphone (joignable 24 h/24)' : 'Téléphone (optionnel)'),
+                validator: (v) => _role == UserRole.ambulanceCompany && (v == null || v.trim().isEmpty)
+                    ? 'Obligatoire'
+                    : Validators.phone(v),
               ),
               gap,
               if (_role == UserRole.patient)
@@ -254,12 +292,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _address,
                   decoration: InputDecoration(
-                      labelText: _role == UserRole.doctor ? 'Adresse du cabinet' : 'Adresse de l\'officine'),
+                      labelText: switch (_role) {
+                    UserRole.doctor => 'Adresse du cabinet',
+                    UserRole.ambulanceCompany => 'Adresse de la société',
+                    _ => 'Adresse de l\'officine',
+                  }),
                   validator: Validators.required,
                 ),
                 gap,
               ],
-              if (_role == UserRole.pharmacist) ...[
+              if (_role == UserRole.ambulanceCompany) ...[
+                TextFormField(
+                  controller: _city,
+                  decoration: const InputDecoration(labelText: 'Ville'),
+                  validator: Validators.required,
+                ),
+                gap,
+              ],
+              if (_role == UserRole.pharmacist || _role == UserRole.ambulanceCompany) ...[
                 Row(
                   children: [
                     Expanded(

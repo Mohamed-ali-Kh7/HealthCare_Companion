@@ -74,6 +74,32 @@ class AuthService {
     return User.fromJson(json as Map<String, dynamic>);
   }
 
+  /// Société d'ambulance conventionnée : compte actif après validation par l'administrateur.
+  Future<User> registerAmbulanceCompany({
+    required String email,
+    required String password,
+    required String companyName,
+    required String conventionNumber,
+    required String address,
+    required String city,
+    required String phone,
+    required double latitude,
+    required double longitude,
+  }) async {
+    final json = await _api.post('/api/auth/register/ambulance-company', body: {
+      'email': email,
+      'password': password,
+      'companyName': companyName,
+      'conventionNumber': conventionNumber,
+      'address': address,
+      'city': city,
+      'phone': phone,
+      'latitude': latitude,
+      'longitude': longitude,
+    });
+    return User.fromJson(json as Map<String, dynamic>);
+  }
+
   Future<User> me() async {
     final json = await _api.get('/api/auth/me');
     return User.fromJson(json as Map<String, dynamic>);

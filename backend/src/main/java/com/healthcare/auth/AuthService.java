@@ -6,6 +6,7 @@ import com.healthcare.patient.PatientService;
 import com.healthcare.pharmacy.PharmacyService;
 import com.healthcare.security.JwtService;
 import com.healthcare.security.SecurityUser;
+import com.healthcare.transport.TransportCompanyService;
 import com.healthcare.user.Role;
 import com.healthcare.user.User;
 import com.healthcare.user.UserService;
@@ -29,6 +30,7 @@ public class AuthService {
     private final PatientService patientService;
     private final DoctorService doctorService;
     private final PharmacyService pharmacyService;
+    private final TransportCompanyService transportCompanyService;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
@@ -54,6 +56,14 @@ public class AuthService {
         User user = userService.createUser(r.email(), r.password(), Role.PHARMACIST, false);
         pharmacyService.createForPharmacist(user, r.pharmacyName(), r.address(), r.phone(),
                 r.latitude(), r.longitude());
+        return UserResponse.from(user);
+    }
+
+    @Transactional
+    public UserResponse registerAmbulanceCompany(RegisterAmbulanceCompanyRequest r) {
+        User user = userService.createUser(r.email(), r.password(), Role.AMBULANCE_COMPANY, false);
+        transportCompanyService.createForUser(user, r.companyName(), r.conventionNumber(), r.address(), r.city(),
+                r.phone().trim(), r.latitude(), r.longitude());
         return UserResponse.from(user);
     }
 

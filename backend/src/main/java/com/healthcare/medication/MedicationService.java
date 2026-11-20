@@ -116,6 +116,11 @@ public class MedicationService {
         return r.reminderTimes().stream().sorted().distinct().toList();
     }
 
+    @Transactional(readOnly = true)
+    public long countOngoingForPatient(Long patientId, LocalDate day) {
+        return medicationRepository.countOngoing(patientId, day);
+    }
+
     /** 1 → 08:00 ; 2 → 08:00, 20:00 ; 3 → 08:00, 14:00, 20:00 ; 4 → 08:00, 12:00, 16:00, 20:00 ... */
     static List<LocalTime> defaultReminderTimes(int timesPerDay) {
         List<LocalTime> times = new ArrayList<>();

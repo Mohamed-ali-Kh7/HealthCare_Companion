@@ -11,6 +11,8 @@ import 'screens/auth/splash_screen.dart';
 import 'screens/doctor/doctor_home_screen.dart';
 import 'screens/patient/patient_home_screen.dart';
 import 'screens/pharmacist/pharmacist_home_screen.dart';
+import 'screens/ambulance/ambulance_company_home_screen.dart';
+import 'widgets/call_overlay.dart';
 
 class HealthcareApp extends StatelessWidget {
   const HealthcareApp({super.key});
@@ -33,6 +35,8 @@ class HealthcareApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      // Appel entrant ou en cours : affiché par-dessus n'importe quel écran
+      builder: (context, child) => CallOverlay(child: child!),
       home: switch (auth.status) {
         AuthStatus.unknown => const SplashScreen(),
         AuthStatus.unauthenticated => const LoginScreen(),
@@ -47,6 +51,7 @@ class HealthcareApp extends StatelessWidget {
         UserRole.patient => const PatientHomeScreen(),
         UserRole.doctor => const DoctorHomeScreen(),
         UserRole.pharmacist => const PharmacistHomeScreen(),
+        UserRole.ambulanceCompany => const AmbulanceCompanyHomeScreen(),
         UserRole.admin => const AdminHomeScreen(),
       };
 }

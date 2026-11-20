@@ -9,6 +9,7 @@ import '../../services/telemonitoring_service.dart';
 import '../../widgets/async_view.dart';
 import '../../widgets/sensor_chart.dart';
 import '../../widgets/ui_helpers.dart';
+import 'symptom_journal_screen.dart';
 
 /// Télésuivi côté patient : collecte des capteurs, saisie manuelle, historique 7 jours.
 /// Les mêmes données sont visibles par le médecin traitant.
@@ -73,6 +74,18 @@ class _HealthScreenState extends State<HealthScreen> {
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: [
+        Card(
+          color: Theme.of(context).colorScheme.primaryContainer,
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            leading: const Icon(Icons.edit_note, size: 36),
+            title: const Text('Journal de symptômes', style: TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: const Text('Douleur, humeur, sommeil, fièvre : notez votre journée'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () =>
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SymptomJournalScreen())),
+          ),
+        ),
         const _CollectorCard(),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

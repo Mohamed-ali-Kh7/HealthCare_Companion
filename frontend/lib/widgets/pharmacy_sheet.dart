@@ -25,19 +25,15 @@ Future<void> showPharmacySheet(BuildContext context, Pharmacy pharmacy) {
             ListTile(
               title: Text(pharmacy.name, style: Theme.of(context).textTheme.titleLarge),
               subtitle: Text(pharmacy.address),
-              trailing: pharmacy.onDuty
-                  ? const StatusChip(label: 'De garde', color: Colors.red)
-                  : null,
+              trailing: pharmacy.onDuty ? const StatusChip(label: 'De garde', color: Colors.red) : null,
             ),
-            if (pharmacy.phone != null)
-              ListTile(leading: const Icon(Icons.phone), title: Text(pharmacy.phone!)),
+            if (pharmacy.phone != null) ListTile(leading: const Icon(Icons.phone), title: Text(pharmacy.phone!)),
             if (pharmacy.openingHours != null)
               ListTile(leading: const Icon(Icons.schedule), title: Text(pharmacy.openingHours!)),
             const Divider(),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: Text('Disponible en stock (${stock.length})',
-                  style: Theme.of(context).textTheme.titleSmall),
+              child: Text('Disponible en stock (${stock.length})', style: Theme.of(context).textTheme.titleSmall),
             ),
             for (final s in stock)
               ListTile(

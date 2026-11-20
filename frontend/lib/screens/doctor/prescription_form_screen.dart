@@ -80,11 +80,12 @@ class _PrescriptionFormScreenState extends State<PrescriptionFormScreen> {
                 subtitle: Text(allergies),
               ),
             ),
-          for (var i = 0; i < _items.length; i++) _ItemEditor(
-            key: ObjectKey(_items[i]),
-            draft: _items[i],
-            onRemove: () => setState(() => _items.removeAt(i)),
-          ),
+          for (var i = 0; i < _items.length; i++)
+            _ItemEditor(
+              key: ObjectKey(_items[i]),
+              draft: _items[i],
+              onRemove: () => setState(() => _items.removeAt(i)),
+            ),
           if (_items.isEmpty)
             const Padding(
               padding: EdgeInsets.all(32),

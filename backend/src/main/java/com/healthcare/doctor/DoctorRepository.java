@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface DoctorRepository extends JpaRepository<Doctor, Long> {
@@ -19,6 +21,9 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 
     @EntityGraph(attributePaths = {"speciality", "user"})
     Optional<Doctor> findWithDetailsById(Long id);
+
+    @EntityGraph(attributePaths = {"speciality", "user"})
+    List<Doctor> findByIdIn(Collection<Long> ids);
 
     /** Recherche des médecins actifs, par nom et/ou spécialité. */
     default Page<Doctor> search(String q, Long specialityId, Pageable pageable) {

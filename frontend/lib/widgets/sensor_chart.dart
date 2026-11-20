@@ -23,8 +23,7 @@ class DailySensorChart extends StatelessWidget {
       return SizedBox(
         height: 160,
         child: Center(
-          child: Text('Aucune mesure sur la période',
-              style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+          child: Text('Aucune mesure sur la période', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
         ),
       );
     }
@@ -51,9 +50,8 @@ class DailySensorChart extends StatelessWidget {
                   showTitles: true,
                   reservedSize: 44,
                   // Le maximum (non arrondi) chevaucherait la dernière graduation
-                  getTitlesWidget: (value, meta) => value == meta.max
-                      ? const SizedBox.shrink()
-                      : Text(value.toInt().toString(), style: labelStyle),
+                  getTitlesWidget: (value, meta) =>
+                      value == meta.max ? const SizedBox.shrink() : Text(value.toInt().toString(), style: labelStyle),
                 ),
               ),
               bottomTitles: AxisTitles(
@@ -128,8 +126,7 @@ class SensorSummaryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(type.label, style: theme.textTheme.titleMedium),
-            Text(headline,
-                style: theme.textTheme.headlineSmall?.copyWith(color: theme.colorScheme.primary)),
+            Text(headline, style: theme.textTheme.headlineSmall?.copyWith(color: theme.colorScheme.primary)),
             DailySensorChart(data: data, type: type),
           ],
         ),

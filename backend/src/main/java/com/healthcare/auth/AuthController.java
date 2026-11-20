@@ -35,6 +35,12 @@ public class AuthController {
         return authService.registerPharmacist(request);
     }
 
+    @PostMapping("/register/ambulance-company")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public UserResponse registerAmbulanceCompany(@Valid @RequestBody RegisterAmbulanceCompanyRequest request) {
+        return authService.registerAmbulanceCompany(request);
+    }
+
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);

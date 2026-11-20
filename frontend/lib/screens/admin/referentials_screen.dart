@@ -52,9 +52,7 @@ class _SpecialitiesTabState extends State<_SpecialitiesTab> {
             TextField(controller: name, decoration: const InputDecoration(labelText: 'Nom')),
             const SizedBox(height: 12),
             TextField(
-                controller: description,
-                maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Description')),
+                controller: description, maxLines: 2, decoration: const InputDecoration(labelText: 'Description')),
           ],
         ),
         actions: [
@@ -286,8 +284,7 @@ class _MedicineDialogState extends State<_MedicineDialog> {
               ),
               gap,
               TextFormField(
-                  controller: _manufacturer,
-                  decoration: const InputDecoration(labelText: 'Laboratoire (optionnel)')),
+                  controller: _manufacturer, decoration: const InputDecoration(labelText: 'Laboratoire (optionnel)')),
             ],
           ),
         ),

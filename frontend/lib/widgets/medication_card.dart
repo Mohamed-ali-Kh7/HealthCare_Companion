@@ -33,8 +33,7 @@ class MedicationCard extends StatelessWidget {
                   Icon(Icons.medication, color: theme.colorScheme.primary),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text('${m.medicine.name} ${m.medicine.strength}',
-                        style: theme.textTheme.titleMedium),
+                    child: Text('${m.medicine.name} ${m.medicine.strength}', style: theme.textTheme.titleMedium),
                   ),
                   StatusChip(label: label, color: color),
                 ],

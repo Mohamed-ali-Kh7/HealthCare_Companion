@@ -10,6 +10,9 @@ class Doctor {
     required this.consultationDurationMinutes,
     this.phone,
     this.bio,
+    this.away = false,
+    this.awayMessage,
+    this.awayUntil,
   });
 
   final int id;
@@ -20,6 +23,11 @@ class Doctor {
   final String? bio;
   final int consultationDurationMinutes;
   final Speciality speciality;
+
+  /// Absent / indisponible (visible dans la messagerie des patients).
+  final bool away;
+  final String? awayMessage;
+  final DateTime? awayUntil;
 
   String get fullName => 'Dr $firstName $lastName';
 
@@ -32,6 +40,9 @@ class Doctor {
         bio: json['bio'] as String?,
         consultationDurationMinutes: json['consultationDurationMinutes'] as int,
         speciality: Speciality.fromJson(json['speciality'] as Map<String, dynamic>),
+        away: json['away'] as bool? ?? false,
+        awayMessage: json['awayMessage'] as String?,
+        awayUntil: json['awayUntil'] == null ? null : DateTime.parse(json['awayUntil'] as String),
       );
 }
 
@@ -68,6 +79,5 @@ class Availability {
         endTime: (json['endTime'] as String).substring(0, 5),
       );
 
-  Map<String, dynamic> toJson() =>
-      {'dayOfWeek': dayOfWeek, 'startTime': startTime, 'endTime': endTime};
+  Map<String, dynamic> toJson() => {'dayOfWeek': dayOfWeek, 'startTime': startTime, 'endTime': endTime};
 }

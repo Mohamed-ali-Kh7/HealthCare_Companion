@@ -162,11 +162,90 @@ public class AppointmentService {
         return counts;
     }
 
+    // ---------------------------------------------------------------- Statistiques
+
+    @Transactional(readOnly = true)
+    public Map<AppointmentStatus, Long> countByStatusForPatient(Long patientId) {
+        return toStatusMap(appointmentRepository.countByStatusForPatient(patientId));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<AppointmentStatus, Long> countByStatusForDoctor(Long doctorId) {
+        return toStatusMap(appointmentRepository.countByStatusForDoctor(doctorId));
+    }
+
+    /** Médecins consultés : rendez-vous accepté ou terminé. */
+    @Transactional(readOnly = true)
+    public long countDoctorsOfPatient(Long patientId) {
+        return appointmentRepository.countDistinctDoctorsOfPatient(patientId,
+                EnumSet.of(AppointmentStatus.ACCEPTED, AppointmentStatus.COMPLETED));
+    }
+
+    /** Prochain rendez-vous en attente ou accepté. */
+    @Transactional(readOnly = true)
+    public Optional<AppointmentResponse> findNextForPatient(Long patientId) {
+        return appointmentRepository.findFirstByPatientIdAndStatusInAndAppointmentDateAfterOrderByAppointmentDateAsc(
+                        patientId, AppointmentStatus.BLOCKING_SLOT, LocalDateTime.now(clock))
+                .map(AppointmentResponse::from);
+    }
+
+    /** Charge des prochains jours (rendez-vous en attente ou acceptés), aujourd'hui inclus, jours vides compris. */
+    @Transactional(readOnly = true)
+    public Map<LocalDate, Long> countUpcomingPerDayForDoctor(Long doctorId, int days) {
+        LocalDate today = LocalDate.now(clock);
+        Map<LocalDate, Long> perDay = new TreeMap<>();
+        for (int i = 0; i < days; i++) {
+            perDay.put(today.plusDays(i), 0L);
+        }
+        appointmentRepository.findBookedDates(doctorId, AppointmentStatus.BLOCKING_SLOT,
+                        today.atStartOfDay(), today.plusDays(days).atStartOfDay())
+                .forEach(date -> perDay.merge(date.toLocalDate(), 1L, Long::sum));
+        return perDay;
+    }
+
+    @Transactional(readOnly = true)
+    public long countCompletedForDoctorSince(Long doctorId, LocalDate from) {
+        return appointmentRepository.countByDoctorIdAndStatusAndAppointmentDateGreaterThanEqual(
+                doctorId, AppointmentStatus.COMPLETED, from.atStartOfDay());
+    }
+
+    /** Tous les statuts présents (à 0 si absents) : le client n'a pas à gérer de clé manquante. */
+    private static Map<AppointmentStatus, Long> toStatusMap(List<Object[]> rows) {
+        Map<AppointmentStatus, Long> counts = new EnumMap<>(AppointmentStatus.class);
+        for (AppointmentStatus status : AppointmentStatus.values()) {
+            counts.put(status, 0L);
+        }
+        rows.forEach(row -> counts.put((AppointmentStatus) row[0], (Long) row[1]));
+        return counts;
+    }
+
     // ---------------------------------------------------------------- Interne
 
     private Appointment findDetailed(Long id) {
         return appointmentRepository.findWithDetailsById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Rendez-vous", id));
+    }
+
+    // ---------------------------------------------------------------- Facturation
+
+    /** Consultations terminées d'un médecin (les plus récentes d'abord) : base de la facturation. */
+    @Transactional(readOnly = true)
+    public List<Appointment> findCompletedEntitiesForDoctor(Long doctorId) {
+        List<Appointment> list = new ArrayList<>(
+                appointmentRepository.findForDoctor(doctorId, AppointmentStatus.COMPLETED, null, null));
+        Collections.reverse(list);
+        return list;
+    }
+
+    /** Consultation terminée du médecin connecté, à facturer ; refusée si elle n'est pas terminée. */
+    @Transactional(readOnly = true)
+    public Appointment getCompletedEntityOwnedByDoctor(Long doctorUserId, Long appointmentId) {
+        Appointment appointment = findOwnedByDoctor(doctorUserId, appointmentId);
+        if (appointment.getStatus() != AppointmentStatus.COMPLETED) {
+            throw new BusinessRuleException("APPOINTMENT_NOT_COMPLETED",
+                    "Seule une consultation terminée peut être facturée");
+        }
+        return appointment;
     }
 
     private Appointment findOwnedByDoctor(Long doctorUserId, Long appointmentId) {

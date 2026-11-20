@@ -12,10 +12,11 @@ public record PatientResponse(
         String phone,
         LocalDate dateOfBirth,
         String bloodGroup,
-        String allergies
+        String allergies,
+        String cnamNumber
 ) {
     public static PatientResponse from(Patient p) {
         return new PatientResponse(p.getId(), p.getUser().getEmail(), p.getFirstName(), p.getLastName(),
-                p.getPhone(), p.getDateOfBirth(), p.getBloodGroup(), p.getAllergies());
+                p.getPhone(), p.getDateOfBirth(), p.getBloodGroup(), p.getAllergies(), p.getCnamNumber());
     }
 }

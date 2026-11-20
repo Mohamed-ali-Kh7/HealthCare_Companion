@@ -4,6 +4,7 @@ enum UserRole {
   patient('PATIENT', 'Patient'),
   doctor('DOCTOR', 'Médecin'),
   pharmacist('PHARMACIST', 'Pharmacien'),
+  ambulanceCompany('AMBULANCE_COMPANY', "Société d'ambulance"),
   admin('ADMIN', 'Administrateur');
 
   const UserRole(this.apiValue, this.label);

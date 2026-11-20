@@ -1,4 +1,5 @@
 import '../core/network/api_client.dart';
+import '../core/utils/formatters.dart';
 import '../models/doctor.dart';
 import '../models/page_response.dart';
 import '../models/speciality.dart';
@@ -19,11 +20,17 @@ class DoctorService {
     return PageResponse.fromJson(json as Map<String, dynamic>, Doctor.fromJson);
   }
 
-  Future<Doctor> getById(int id) async =>
-      Doctor.fromJson(await _api.get('/api/doctors/$id') as Map<String, dynamic>);
+  Future<Doctor> getById(int id) async => Doctor.fromJson(await _api.get('/api/doctors/$id') as Map<String, dynamic>);
 
-  Future<Doctor> getMyProfile() async =>
-      Doctor.fromJson(await _api.get('/api/doctors/me') as Map<String, dynamic>);
+  Future<Doctor> getMyProfile() async => Doctor.fromJson(await _api.get('/api/doctors/me') as Map<String, dynamic>);
+
+  /// Absent / disponible : les patients le voient dans la messagerie et peuvent passer par l'assistant.
+  Future<Doctor> setAway({required bool away, String? message, DateTime? until}) async =>
+      Doctor.fromJson(await _api.put('/api/doctors/me/away', body: {
+        'away': away,
+        'message': message,
+        'until': until == null ? null : Fmt.apiDate(until),
+      }) as Map<String, dynamic>);
 
   Future<Doctor> updateMyProfile({
     required String firstName,
@@ -52,9 +59,8 @@ class DoctorService {
   Future<List<Availability>> getMyAvailabilities() async =>
       _availabilities(await _api.get('/api/doctors/me/availabilities'));
 
-  Future<List<Availability>> replaceMyAvailabilities(List<Availability> items) async =>
-      _availabilities(await _api.put('/api/doctors/me/availabilities',
-          body: {'availabilities': items.map((a) => a.toJson()).toList()}));
+  Future<List<Availability>> replaceMyAvailabilities(List<Availability> items) async => _availabilities(await _api
+      .put('/api/doctors/me/availabilities', body: {'availabilities': items.map((a) => a.toJson()).toList()}));
 
   List<Availability> _availabilities(dynamic json) =>
       (json as List).map((e) => Availability.fromJson(e as Map<String, dynamic>)).toList();
@@ -66,13 +72,12 @@ class DoctorService {
     return json.map((e) => Speciality.fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  Future<Speciality> createSpeciality(String name, String? description) async =>
-      Speciality.fromJson(await _api.post('/api/specialities',
-          body: {'name': name, 'description': description}) as Map<String, dynamic>);
+  Future<Speciality> createSpeciality(String name, String? description) async => Speciality.fromJson(
+      await _api.post('/api/specialities', body: {'name': name, 'description': description}) as Map<String, dynamic>);
 
   Future<Speciality> updateSpeciality(int id, String name, String? description) async =>
-      Speciality.fromJson(await _api.put('/api/specialities/$id',
-          body: {'name': name, 'description': description}) as Map<String, dynamic>);
+      Speciality.fromJson(await _api.put('/api/specialities/$id', body: {'name': name, 'description': description})
+          as Map<String, dynamic>);
 
   Future<void> deleteSpeciality(int id) => _api.delete('/api/specialities/$id');
 }

@@ -52,8 +52,7 @@ Future<bool> confirm(
         FilledButton(
           style: destructive
               ? FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                  minimumSize: const Size(0, 40))
+                  backgroundColor: Theme.of(context).colorScheme.error, minimumSize: const Size(0, 40))
               : FilledButton.styleFrom(minimumSize: const Size(0, 40)),
           onPressed: () => Navigator.pop(context, true),
           child: Text(confirmLabel),
@@ -98,8 +97,7 @@ Future<String?> promptText(
 class Validators {
   Validators._();
 
-  static String? required(String? v) =>
-      (v == null || v.trim().isEmpty) ? 'Champ obligatoire' : null;
+  static String? required(String? v) => (v == null || v.trim().isEmpty) ? 'Champ obligatoire' : null;
 
   static String? email(String? v) {
     if (v == null || v.trim().isEmpty) return 'Champ obligatoire';

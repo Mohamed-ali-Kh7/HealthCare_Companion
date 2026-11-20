@@ -29,6 +29,7 @@ class _UsersScreenState extends State<UsersScreen> {
     (label: 'Patients', role: UserRole.patient, enabled: null),
     (label: 'Médecins', role: UserRole.doctor, enabled: null),
     (label: 'Pharmaciens', role: UserRole.pharmacist, enabled: null),
+    (label: 'Ambulances', role: UserRole.ambulanceCompany, enabled: null),
     (label: 'Admins', role: UserRole.admin, enabled: null),
   ];
 

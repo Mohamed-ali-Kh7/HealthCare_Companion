@@ -6,11 +6,14 @@ import '../../core/utils/formatters.dart';
 import '../../models/patient.dart';
 import '../../models/prescription.dart';
 import '../../models/sensor.dart';
+import '../../models/symptom_entry.dart';
+import '../../services/journal_service.dart';
 import '../../services/patient_service.dart';
 import '../../services/prescription_service.dart';
 import '../../services/telemonitoring_service.dart';
 import '../../widgets/async_view.dart';
 import '../../widgets/sensor_chart.dart';
+import '../../widgets/symptom_journal_view.dart';
 import '../../widgets/ui_helpers.dart';
 import '../patient/prescription_details_screen.dart';
 import 'prescription_form_screen.dart';
@@ -54,12 +57,13 @@ class _PatientRecordScreenState extends State<PatientRecordScreen> {
         }
         final patient = snapshot.data!;
         return DefaultTabController(
-          length: 3,
+          length: 4,
           child: Scaffold(
             appBar: AppBar(
               title: Text(patient.fullName),
-              bottom: const TabBar(tabs: [
+              bottom: const TabBar(isScrollable: true, tabAlignment: TabAlignment.start, tabs: [
                 Tab(text: 'Dossier'),
+                Tab(text: 'Journal'),
                 Tab(text: 'Ordonnances'),
                 Tab(text: 'Télésuivi'),
               ]),
@@ -73,6 +77,7 @@ class _PatientRecordScreenState extends State<PatientRecordScreen> {
             ),
             body: TabBarView(children: [
               _InfoTab(patient: patient),
+              _JournalTab(patientId: patient.id),
               _PrescriptionsTab(patientId: patient.id),
               _TelemonitoringTab(patientId: patient.id),
             ]),
@@ -110,6 +115,56 @@ class _InfoTab extends StatelessWidget {
           subtitle: Text(p.allergies ?? 'Aucune déclarée'),
         ),
       ],
+    );
+  }
+}
+
+/// Journal de symptômes tenu par le patient : évolution avant la consultation (lecture seule).
+class _JournalTab extends StatefulWidget {
+  const _JournalTab({required this.patientId});
+
+  final int patientId;
+
+  @override
+  State<_JournalTab> createState() => _JournalTabState();
+}
+
+class _JournalTabState extends State<_JournalTab> {
+  int _days = 14;
+
+  @override
+  Widget build(BuildContext context) {
+    return AsyncView<List<SymptomEntry>>(
+      key: ValueKey(_days),
+      load: () => context.read<JournalService>().getForPatient(widget.patientId, days: _days),
+      builder: (context, entries, reload) => RefreshIndicator(
+        onRefresh: reload,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+          children: [
+            Row(
+              children: [
+                const Expanded(child: Text('Saisi par le patient, jour après jour')),
+                SegmentedButton<int>(
+                  showSelectedIcon: false,
+                  segments: const [
+                    ButtonSegment(value: 7, label: Text('7 j')),
+                    ButtonSegment(value: 14, label: Text('14 j')),
+                    ButtonSegment(value: 30, label: Text('30 j')),
+                  ],
+                  selected: {_days},
+                  onSelectionChanged: (s) => setState(() => _days = s.first),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (entries.isEmpty)
+              const EmptyState(icon: Icons.edit_note, message: 'Le patient n\'a pas encore rempli son journal')
+            else
+              SymptomJournalView(entries: entries, days: _days),
+          ],
+        ),
+      ),
     );
   }
 }

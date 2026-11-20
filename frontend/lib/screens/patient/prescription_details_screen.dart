@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/pdf/prescription_pdf.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/prescription.dart';
+import '../../widgets/ui_helpers.dart';
 import 'medicine_availability_screen.dart';
 
 /// Détail d'une ordonnance. Utilisé côté patient (avec recherche en pharmacie) et côté médecin.
@@ -15,12 +17,34 @@ class PrescriptionDetailsScreen extends StatelessWidget {
   final Prescription prescription;
   final bool showPharmacySearch;
 
+  Future<void> _export(BuildContext context, Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (e) {
+      if (context.mounted) showSnack(context, 'Export PDF impossible : $e', isError: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = prescription;
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text('Ordonnance du ${Fmt.date(p.date)}')),
+      appBar: AppBar(
+        title: Text('Ordonnance du ${Fmt.date(p.date)}'),
+        actions: [
+          IconButton(
+            tooltip: 'Télécharger en PDF',
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            onPressed: () => _export(context, () => PrescriptionPdf.share(p)),
+          ),
+          IconButton(
+            tooltip: 'Imprimer',
+            icon: const Icon(Icons.print_outlined),
+            onPressed: () => _export(context, () => PrescriptionPdf.printDocument(p)),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [
@@ -34,8 +58,7 @@ class PrescriptionDetailsScreen extends StatelessWidget {
             title: Text(p.patient.fullName),
             subtitle: const Text('Patient'),
           ),
-          if (p.notes != null)
-            ListTile(leading: const Icon(Icons.notes), title: Text(p.notes!)),
+          if (p.notes != null) ListTile(leading: const Icon(Icons.notes), title: Text(p.notes!)),
           const Divider(),
           for (final item in p.items)
             Card(
@@ -44,10 +67,8 @@ class PrescriptionDetailsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${item.medicine.name} ${item.medicine.strength}',
-                        style: theme.textTheme.titleMedium),
-                    Text(item.medicine.formLabel,
-                        style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+                    Text('${item.medicine.name} ${item.medicine.strength}', style: theme.textTheme.titleMedium),
+                    Text(item.medicine.formLabel, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
                     const SizedBox(height: 6),
                     Text(item.posology),
                     if (item.instructions != null) Text(item.instructions!),

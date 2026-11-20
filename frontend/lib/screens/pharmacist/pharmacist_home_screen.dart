@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../common/role_scaffold.dart';
+import 'pharmacy_orders_screen.dart';
 import 'pharmacy_profile_screen.dart';
 import 'stock_screen.dart';
 
@@ -11,6 +12,12 @@ class PharmacistHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return RoleScaffold(
       tabs: [
+        RoleTab(
+          label: 'Commandes',
+          icon: Icons.receipt_long_outlined,
+          selectedIcon: Icons.receipt_long,
+          builder: (_) => const PharmacyOrdersScreen(),
+        ),
         RoleTab(
           label: 'Stock',
           icon: Icons.inventory_2_outlined,

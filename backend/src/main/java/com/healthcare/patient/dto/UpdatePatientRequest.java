@@ -13,6 +13,7 @@ public record UpdatePatientRequest(
         @Size(max = 30) @Pattern(regexp = "^[+0-9 ]*$", message = "Numéro de téléphone invalide") String phone,
         @Past LocalDate dateOfBirth,
         @Pattern(regexp = "^(A|B|AB|O)[+-]$|^$", message = "Groupe sanguin invalide (ex : A+, O-)") String bloodGroup,
-        @Size(max = 500) String allergies
+        @Size(max = 500) String allergies,
+        @Size(max = 20) @Pattern(regexp = "^[0-9 /-]*$", message = "Numéro CNAM invalide (chiffres uniquement)") String cnamNumber
 ) {
 }

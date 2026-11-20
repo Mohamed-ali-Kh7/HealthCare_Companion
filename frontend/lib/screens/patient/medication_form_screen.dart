@@ -61,8 +61,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     if (n <= 1) return [const TimeOfDay(hour: 8, minute: 0)];
     final interval = (12 * 60) ~/ (n - 1);
     return [
-      for (var i = 0; i < n; i++)
-        TimeOfDay(hour: 8 + (i * interval) ~/ 60, minute: (i * interval) % 60),
+      for (var i = 0; i < n; i++) TimeOfDay(hour: 8 + (i * interval) ~/ 60, minute: (i * interval) % 60),
     ];
   }
 

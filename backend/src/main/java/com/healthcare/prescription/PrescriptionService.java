@@ -9,10 +9,12 @@ import com.healthcare.medicine.MedicineService;
 import com.healthcare.patient.Patient;
 import com.healthcare.patient.PatientService;
 import com.healthcare.prescription.dto.CreatePrescriptionRequest;
+import com.healthcare.prescription.dto.MedicineUsage;
 import com.healthcare.prescription.dto.PrescriptionItemRequest;
 import com.healthcare.prescription.dto.PrescriptionResponse;
 import com.healthcare.security.SecurityUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,7 @@ public class PrescriptionService {
     private final MedicationService medicationService;
     private final CareAccessService careAccessService;
     private final Clock clock;
+    private final PrescriptionVerifier verifier;
 
     /**
      * Le médecin prescrit pour un patient qu'il suit (rendez-vous accepté ou terminé).
@@ -55,7 +58,7 @@ public class PrescriptionService {
         Prescription saved = prescriptionRepository.save(prescription);
 
         saved.getItems().forEach(item -> medicationService.createFromPrescriptionItem(item, patient, today));
-        return PrescriptionResponse.from(saved);
+        return toResponse(saved);
     }
 
     @Transactional(readOnly = true)
@@ -93,11 +96,48 @@ public class PrescriptionService {
         if (!allowed) {
             throw new ResourceNotFoundException("Ordonnance", id);
         }
-        return PrescriptionResponse.from(p);
+        return toResponse(p);
     }
 
-    private static List<PrescriptionResponse> toResponses(List<Prescription> prescriptions) {
-        return prescriptions.stream().map(PrescriptionResponse::from).toList();
+    /**
+     * Vérification publique (QR code de l'ordonnance PDF), sans connexion.
+     * Vide si le jeton est falsifié ou si l'ordonnance n'existe pas.
+     */
+    @Transactional(readOnly = true)
+    public java.util.Optional<PrescriptionResponse> verifyPublic(String token) {
+        return verifier.verify(token)
+                .flatMap(prescriptionRepository::findWithDetailsById)
+                .map(this::toResponse);
+    }
+
+    // ---------------------------------------------------------------- Statistiques
+
+    @Transactional(readOnly = true)
+    public long countForPatient(Long patientId) {
+        return prescriptionRepository.countByPatientId(patientId);
+    }
+
+    @Transactional(readOnly = true)
+    public long countIssuedByDoctor(Long doctorId) {
+        return prescriptionRepository.countByDoctorId(doctorId);
+    }
+
+    @Transactional(readOnly = true)
+    public long countIssuedByDoctorSince(Long doctorId, LocalDate from) {
+        return prescriptionRepository.countByDoctorIdAndPrescriptionDateGreaterThanEqual(doctorId, from);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MedicineUsage> topMedicinesOfDoctor(Long doctorId, int limit) {
+        return prescriptionRepository.findTopMedicinesOfDoctor(doctorId, PageRequest.of(0, limit));
+    }
+
+    private List<PrescriptionResponse> toResponses(List<Prescription> prescriptions) {
+        return prescriptions.stream().map(this::toResponse).toList();
+    }
+
+    private PrescriptionResponse toResponse(Prescription p) {
+        return PrescriptionResponse.from(p, verifier.url(p.getId()));
     }
 
     private static String trimToNull(String value) {

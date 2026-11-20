@@ -44,6 +44,28 @@ public class Doctor extends BaseEntity {
     @Column(name = "consultation_duration_minutes", nullable = false)
     private int consultationDurationMinutes = 30;
 
+    /** Absent / indisponible (congé, garde...) : les patients le voient dans la messagerie et peuvent passer par l'assistant. */
+    @Column(nullable = false)
+    private boolean away = false;
+
+    @Column(name = "away_message", length = 300)
+    private String awayMessage;
+
+    /** Date de retour prévue (incluse comme dernier jour d'absence) ; null = jusqu'à nouvel ordre. */
+    @Column(name = "away_until")
+    private java.time.LocalDate awayUntil;
+
+    public void setAway(boolean away, String message, java.time.LocalDate until) {
+        this.away = away;
+        this.awayMessage = away ? message : null;
+        this.awayUntil = away ? until : null;
+    }
+
+    /** Absent ce jour-là : une absence dont la date de fin est passée n'est plus prise en compte. */
+    public boolean isAwayOn(java.time.LocalDate day) {
+        return away && (awayUntil == null || !day.isAfter(awayUntil));
+    }
+
     public Doctor(User user, String firstName, String lastName, String phone,
                   String address, Speciality speciality) {
         this.user = user;
