@@ -8,6 +8,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "doctors",
@@ -45,6 +46,8 @@ public class Doctor extends BaseEntity {
     private int consultationDurationMinutes = 30;
 
     /** Absent / indisponible (congé, garde...) : les patients le voient dans la messagerie et peuvent passer par l'assistant. */
+    // DEFAULT au niveau SQL : sans lui, ajouter la colonne NOT NULL échoue sur une table déjà remplie (PostgreSQL/Neon).
+    @ColumnDefault("false")
     @Column(nullable = false)
     private boolean away = false;
 
